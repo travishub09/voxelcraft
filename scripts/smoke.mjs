@@ -123,6 +123,9 @@ try {
   if (state.waterCount > 0) ok(`water filled (${state.waterCount} voxels)`);
   else fail("no water generated");
 
+  if (state.lavaCount > 0) ok(`lava pooled (${state.lavaCount} voxels)`);
+  else fail("no lava generated");
+
   console.log("\nState:", JSON.stringify(state));
 } catch (e) {
   fail("harness error: " + e.message);

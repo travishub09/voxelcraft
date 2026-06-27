@@ -132,6 +132,7 @@ window.__VOXELCRAFT__ = {
       treeCount: world.treeCount,
       caveCount: world.caveCount,
       waterCount: world.waterCount,
+      lavaCount: world.lavaCount,
       worldSize: [world.sx, world.sy, world.sz],
       sampleHeights: [
         world.heightAt(8, 8),

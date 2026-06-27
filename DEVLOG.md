@@ -2,6 +2,20 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Lava
+**Goal:** molten lava pooling deep underground (Nether ingredient #2).
+
+Implemented:
+- `blocks.js`: `LAVA` block + orange tile; `isFluid()` (water/lava).
+- `chunk.js`: mesher now emits a third **lava** geometry layer (opaque culling
+  rules, separate material for glow).
+- `world.js`: emissive lava material; generic `_updateLayerMesh()` handles both
+  water and lava mesh lifecycles; `generateChunk()` fills deep cave air
+  (y ≤ lavaLevel 4) with lava; `isSolid()` now also excludes lava.
+- Smoke asserts lava pooled.
+
+Results: 8/8 unit, 12/12 smoke. 1087 lava voxels, glowing underground.
+
 ## 2026-06-27 — Water (transparency-aware mesher)
 **Goal:** oceans/lakes with see-through water. Also lays the groundwork (split
 opaque/transparent meshing) for lava and portals on the road to the Nether.

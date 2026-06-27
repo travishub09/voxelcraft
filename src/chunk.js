@@ -22,6 +22,7 @@ export class Chunk {
     this.data = new Uint8Array(CHUNK_SIZE * WORLD_HEIGHT * CHUNK_SIZE);
     this.mesh = null;
     this.waterMesh = null;
+    this.lavaMesh = null;
     this.dirty = true;
   }
 
@@ -60,6 +61,7 @@ function makeGeometry(buf) {
 export function buildChunkGeometries(world, chunk) {
   const opaque = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
   const water = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
+  const lava = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
 
   const ox = chunk.cx * CHUNK_SIZE;
   const oz = chunk.cz * CHUNK_SIZE;
@@ -81,13 +83,15 @@ export function buildChunkGeometries(world, chunk) {
         const type = chunk.getLocal(x, y, z);
         if (type === BLOCK.AIR) continue;
         const isWater = type === BLOCK.WATER;
+        const isLava = type === BLOCK.LAVA;
+        const buf = isWater ? water : isLava ? lava : opaque;
         const faceTiles = BLOCK_TILES[type];
 
         for (let f = 0; f < FACES.length; f++) {
           const { dir, corners, normal } = FACES[f];
           const neighbor = world.get(ox + x + dir[0], y + dir[1], oz + z + dir[2]);
 
-          // Water: only draw faces exposed to air (its surface). Opaque blocks:
+          // Water: only draw faces exposed to air (its surface). Opaque/lava:
           // draw any face whose neighbor isn't opaque (air or water).
           if (isWater) {
             if (neighbor !== BLOCK.AIR) continue;
@@ -98,7 +102,7 @@ export function buildChunkGeometries(world, chunk) {
           const [u0, u1] = tileUV(faceTiles[f]);
           const uu0 = u0 + eps, uu1 = u1 - eps;
           const faceUV = [[uu0, 1], [uu0, 0], [uu1, 0], [uu1, 1]];
-          emit(isWater ? water : opaque, x, y, z, corners, normal, faceUV);
+          emit(buf, x, y, z, corners, normal, faceUV);
         }
       }
     }
@@ -107,5 +111,6 @@ export function buildChunkGeometries(world, chunk) {
   return {
     opaque: makeGeometry(opaque),
     water: water.vert > 0 ? makeGeometry(water) : null,
+    lava: lava.vert > 0 ? makeGeometry(lava) : null,
   };
 }

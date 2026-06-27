@@ -16,12 +16,17 @@ export class World {
     this.sz = chunksZ * CHUNK_SIZE;
 
     this.seaLevel = 10;
+    this.lavaLevel = 4;
     this.chunks = new Map(); // "cx,cz" -> Chunk
     this.group = new THREE.Group();
     const tex = this._buildAtlasTexture();
     this.material = new THREE.MeshLambertMaterial({ map: tex });
     this.waterMaterial = new THREE.MeshLambertMaterial({
       map: tex, transparent: true, opacity: 0.72, depthWrite: false,
+    });
+    // Lava glows (emissive) so it reads as molten even at night / underground.
+    this.lavaMaterial = new THREE.MeshLambertMaterial({
+      map: tex, emissive: 0xff7a18, emissiveMap: tex, emissiveIntensity: 0.9,
     });
 
     this._createChunks();
@@ -53,6 +58,7 @@ export class World {
     // cross chunk borders, then mesh everything.
     this.caveCount = 0;
     this.waterCount = 0;
+    this.lavaCount = 0;
     for (const chunk of this.chunks.values()) this.generateChunk(chunk);
     this.decorateTrees();
     for (const chunk of this.chunks.values()) this.remeshChunk(chunk);
@@ -105,10 +111,10 @@ export class World {
     return x >= 0 && y >= 0 && z >= 0 && x < this.sx && y < this.sy && z < this.sz;
   }
 
-  // Solid = blocks the player. Air and water don't.
+  // Solid = blocks the player. Air and fluids (water/lava) don't.
   isSolid(x, y, z) {
     const t = this.get(x, y, z);
-    return t !== BLOCK.AIR && t !== BLOCK.WATER;
+    return t !== BLOCK.AIR && t !== BLOCK.WATER && t !== BLOCK.LAVA;
   }
 
   get(x, y, z) {
@@ -177,6 +183,14 @@ export class World {
           }
         }
 
+        // Fill deep cave air with lava (molten pools at the bottom of caves).
+        for (let y = 1; y <= this.lavaLevel; y++) {
+          if (chunk.getLocal(x, y, z) === BLOCK.AIR) {
+            chunk.setLocal(x, y, z, BLOCK.LAVA);
+            this.lavaCount++;
+          }
+        }
+
         // Flood air at/below sea level with water (oceans & lakes).
         for (let y = h + 1; y <= this.seaLevel; y++) {
           if (chunk.getLocal(x, y, z) === BLOCK.AIR) {
@@ -189,7 +203,7 @@ export class World {
   }
 
   remeshChunk(chunk) {
-    const { opaque, water } = buildChunkGeometries(this, chunk);
+    const { opaque, water, lava } = buildChunkGeometries(this, chunk);
     const px = chunk.cx * CHUNK_SIZE, pz = chunk.cz * CHUNK_SIZE;
 
     if (chunk.mesh) {
@@ -201,21 +215,26 @@ export class World {
       this.group.add(chunk.mesh);
     }
 
-    // Water mesh (transparent) — create/update/remove as needed.
-    if (water) {
-      if (chunk.waterMesh) {
-        chunk.waterMesh.geometry.dispose();
-        chunk.waterMesh.geometry = water;
-      } else {
-        chunk.waterMesh = new THREE.Mesh(water, this.waterMaterial);
-        chunk.waterMesh.position.set(px, 0, pz);
-        this.group.add(chunk.waterMesh);
-      }
-    } else if (chunk.waterMesh) {
-      chunk.waterMesh.geometry.dispose();
-      this.group.remove(chunk.waterMesh);
-      chunk.waterMesh = null;
-    }
+    this._updateLayerMesh(chunk, "waterMesh", water, this.waterMaterial, px, pz);
+    this._updateLayerMesh(chunk, "lavaMesh", lava, this.lavaMaterial, px, pz);
     chunk.dirty = false;
+  }
+
+  // Create/update/remove an optional secondary mesh layer (water or lava).
+  _updateLayerMesh(chunk, prop, geom, material, px, pz) {
+    if (geom) {
+      if (chunk[prop]) {
+        chunk[prop].geometry.dispose();
+        chunk[prop].geometry = geom;
+      } else {
+        chunk[prop] = new THREE.Mesh(geom, material);
+        chunk[prop].position.set(px, 0, pz);
+        this.group.add(chunk[prop]);
+      }
+    } else if (chunk[prop]) {
+      chunk[prop].geometry.dispose();
+      this.group.remove(chunk[prop]);
+      chunk[prop] = null;
+    }
   }
 }
