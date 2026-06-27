@@ -2,6 +2,7 @@ import * as THREE from "three";
 import { World } from "./world.js";
 import { Player } from "./player.js";
 import { Hotbar } from "./hotbar.js";
+import { Inventory } from "./inventory.js";
 import { DayNight } from "./daynight.js";
 import { BLOCK } from "./blocks.js";
 
@@ -42,8 +43,40 @@ const player = new Player(camera, world, canvas);
 const spawnX = Math.floor(world.sx / 2), spawnZ = Math.floor(world.sz / 2);
 player.position.set(spawnX + 0.5, world.heightAt(spawnX, spawnZ) + 2, spawnZ + 0.5);
 
-// --- Block selection (hotbar) ---
-const hotbar = new Hotbar(document.getElementById("hotbar"));
+// --- Inventory + hotbar ---
+const inventory = new Inventory();
+// A small starter kit so you can build right away; break blocks to collect more.
+inventory.add(BLOCK.GRASS, 16);
+inventory.add(BLOCK.DIRT, 16);
+inventory.add(BLOCK.STONE, 16);
+inventory.add(BLOCK.WOOD, 16);
+const hotbar = new Hotbar(document.getElementById("hotbar"), inventory);
+
+// What a broken block yields (most drop themselves).
+function dropOf(type) {
+  return type; // grass→grass, stone→stone, etc.
+}
+
+// Break the block at (x,y,z): clear it and collect the drop.
+function breakBlock(x, y, z) {
+  const type = world.get(x, y, z);
+  if (type === BLOCK.AIR || !world.isSolid(x, y, z)) return false;
+  world.setBlock(x, y, z, BLOCK.AIR);
+  inventory.add(dropOf(type), 1);
+  return true;
+}
+
+// Place the selected hotbar item at (x,y,z), consuming one from the stack.
+function placeBlock(x, y, z) {
+  const idx = hotbar.index;
+  const item = inventory.slots[idx];
+  if (!item) return false;
+  if (playerOccupies(x, y, z)) return false;
+  if (world.get(x, y, z) !== BLOCK.AIR) return false;
+  world.setBlock(x, y, z, item.type);
+  inventory.removeAt(idx, 1);
+  return true;
+}
 
 // --- Voxel ray traversal (Amanatides & Woo) ---
 // Returns { block: [x,y,z], place: [x,y,z] } or null.
@@ -91,14 +124,9 @@ document.addEventListener("mousedown", (e) => {
   if (!hit) return;
 
   if (e.button === 0) {
-    // Break
-    world.setBlock(hit.block[0], hit.block[1], hit.block[2], BLOCK.AIR);
+    breakBlock(hit.block[0], hit.block[1], hit.block[2]);
   } else if (e.button === 2) {
-    // Place (don't place inside the player)
-    const [px, py, pz] = hit.place;
-    if (!playerOccupies(px, py, pz)) {
-      world.setBlock(px, py, pz, hotbar.selectedBlock);
-    }
+    placeBlock(hit.place[0], hit.place[1], hit.place[2]);
   }
 });
 
@@ -252,6 +280,15 @@ function buildTestPortal() {
 window.__VOXELCRAFT__ = {
   ready: false,
   buildTestPortal,
+  // Break the topmost solid block of a column and report the new item total.
+  testCollect() {
+    const before = inventory.totalItems();
+    const x = 4, z = 4;
+    for (let y = world.sy - 1; y >= 0; y--) {
+      if (world.isSolid(x, y, z)) { breakBlock(x, y, z); break; }
+    }
+    return { before, after: inventory.totalItems(), used: inventory.usedSlots() };
+  },
   // Programmatically travel to the Nether (used by the smoke test).
   enterNether() {
     if (dimension !== "nether") travel();
@@ -265,6 +302,8 @@ window.__VOXELCRAFT__ = {
   get state() {
     return {
       dimension,
+      inventoryUsed: inventory.usedSlots(),
+      inventoryTotal: inventory.totalItems(),
       chunkCount: world.chunks.size,
       treeCount: overworld.treeCount,
       caveCount: overworld.caveCount,

@@ -111,8 +111,15 @@ try {
   if (state.treeCount > 0) ok(`trees generated (${state.treeCount})`);
   else fail("no trees generated");
 
-  if (hotbarSlots >= 6) ok(`hotbar rendered (${hotbarSlots} slots)`);
+  if (hotbarSlots >= 9) ok(`hotbar rendered (${hotbarSlots} slots)`);
   else fail(`hotbar missing slots (${hotbarSlots})`);
+
+  if (state.inventoryTotal > 0) ok(`inventory has starter kit (${state.inventoryTotal} items, ${state.inventoryUsed} slots)`);
+  else fail("inventory empty at start");
+
+  const collect = await page.evaluate(() => window.__VOXELCRAFT__.testCollect());
+  if (collect.after === collect.before + 1) ok(`breaking a block collects it (${collect.before} -> ${collect.after})`);
+  else fail(`break did not collect (${collect.before} -> ${collect.after})`);
 
   if (state.obsidianCount > 0) ok(`obsidian deposits generated (${state.obsidianCount})`);
   else fail("no obsidian generated");
