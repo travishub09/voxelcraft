@@ -4,7 +4,7 @@
 - [ ] Caves (carve with 3D noise during generation)
 
 ## Next
-- [ ] Day/night cycle (animate sun + sky color)
+- [x] Day/night cycle
 - [ ] Water (sea level + transparent water blocks)
 
 ## Backlog

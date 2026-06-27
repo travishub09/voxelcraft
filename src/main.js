@@ -2,10 +2,12 @@ import * as THREE from "three";
 import { World } from "./world.js";
 import { Player } from "./player.js";
 import { Hotbar } from "./hotbar.js";
+import { DayNight } from "./daynight.js";
 import { BLOCK } from "./blocks.js";
 
 const canvas = document.getElementById("app");
 const overlay = document.getElementById("overlay");
+const clockEl = document.getElementById("clock");
 
 // --- Renderer ---
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -19,11 +21,13 @@ scene.fog = new THREE.Fog(0x87ceeb, 40, 80);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
 
-// --- Lighting ---
+// --- Lighting + day/night cycle ---
 const sun = new THREE.DirectionalLight(0xffffff, 1.6);
 sun.position.set(40, 80, 20);
 scene.add(sun);
-scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+const ambient = new THREE.AmbientLight(0xffffff, 0.55);
+scene.add(ambient);
+const dayNight = new DayNight(scene, sun, ambient);
 
 // --- World ---
 const world = new World();
@@ -135,6 +139,7 @@ window.__VOXELCRAFT__ = {
       drawCalls: renderer.info.render.calls,
       triangles: renderer.info.render.triangles,
       playerY: player.position.y,
+      timeOfDay: dayNight.t,
     };
   },
 };
@@ -145,6 +150,8 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05); // clamp to avoid tunneling on lag
   player.update(dt);
+  dayNight.update(dt);
+  clockEl.textContent = "🕐 " + dayNight.clock;
   renderer.render(scene, camera);
   window.__VOXELCRAFT__.ready = true;
 }

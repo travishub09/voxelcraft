@@ -75,6 +75,9 @@ try {
   await sleep(500);
 
   const state = await page.evaluate(() => window.__VOXELCRAFT__.state);
+  const t0 = state.timeOfDay;
+  await sleep(600);
+  const t1 = await page.evaluate(() => window.__VOXELCRAFT__.state.timeOfDay);
   const canvas = await page.evaluate(() => {
     const c = document.getElementById("app");
     return { w: c.width, h: c.height };
@@ -106,6 +109,9 @@ try {
 
   if (hotbarSlots >= 5) ok(`hotbar rendered (${hotbarSlots} slots)`);
   else fail(`hotbar missing slots (${hotbarSlots})`);
+
+  if (t1 > t0) ok(`day/night cycle advancing (t ${t0.toFixed(4)} -> ${t1.toFixed(4)})`);
+  else fail(`time not advancing (t ${t0} -> ${t1})`);
 
   console.log("\nState:", JSON.stringify(state));
 } catch (e) {

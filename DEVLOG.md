@@ -2,6 +2,19 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Day/night cycle
+**Goal:** animate a day/night cycle with moving sun and shifting sky.
+
+Implemented:
+- `daynight.js`: `DayNight` advances time (120s/cycle), orbits the directional
+  sun, ramps sun + ambient intensity with elevation, and lerps sky/fog colour
+  night → dusk tint → day. Exposes a 24h `clock` string.
+- `index.html`: on-screen clock readout (top-right).
+- `main.js`: updates the cycle each frame; exposes `timeOfDay` to debug hook.
+- Smoke test asserts time advances between two samples.
+
+Results: smoke green; cycle confirmed advancing headlessly.
+
 ## 2026-06-27 — Visual hotbar
 **Goal:** replace the text "Selected: x" label with a real hotbar UI.
 
