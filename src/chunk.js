@@ -23,6 +23,7 @@ export class Chunk {
     this.mesh = null;
     this.waterMesh = null;
     this.lavaMesh = null;
+    this.portalMesh = null;
     this.dirty = true;
   }
 
@@ -62,6 +63,7 @@ export function buildChunkGeometries(world, chunk) {
   const opaque = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
   const water = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
   const lava = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
+  const portal = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
 
   const ox = chunk.cx * CHUNK_SIZE;
   const oz = chunk.cz * CHUNK_SIZE;
@@ -84,16 +86,17 @@ export function buildChunkGeometries(world, chunk) {
         if (type === BLOCK.AIR) continue;
         const isWater = type === BLOCK.WATER;
         const isLava = type === BLOCK.LAVA;
-        const buf = isWater ? water : isLava ? lava : opaque;
+        const isPortal = type === BLOCK.PORTAL;
+        const buf = isWater ? water : isLava ? lava : isPortal ? portal : opaque;
         const faceTiles = BLOCK_TILES[type];
 
         for (let f = 0; f < FACES.length; f++) {
           const { dir, corners, normal } = FACES[f];
           const neighbor = world.get(ox + x + dir[0], y + dir[1], oz + z + dir[2]);
 
-          // Water: only draw faces exposed to air (its surface). Opaque/lava:
-          // draw any face whose neighbor isn't opaque (air or water).
-          if (isWater) {
+          // Water/portal: only draw faces exposed to air (their surface).
+          // Opaque/lava: draw any face whose neighbor isn't opaque.
+          if (isWater || isPortal) {
             if (neighbor !== BLOCK.AIR) continue;
           } else {
             if (isOpaque(neighbor)) continue;
@@ -112,5 +115,6 @@ export function buildChunkGeometries(world, chunk) {
     opaque: makeGeometry(opaque),
     water: water.vert > 0 ? makeGeometry(water) : null,
     lava: lava.vert > 0 ? makeGeometry(lava) : null,
+    portal: portal.vert > 0 ? makeGeometry(portal) : null,
   };
 }

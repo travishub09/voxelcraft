@@ -2,6 +2,25 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Nether portal (frame detection + ignition)
+**Goal:** build an obsidian frame and light it into a portal.
+
+Implemented:
+- `blocks.js`: `PORTAL` block + purple tile; non-opaque, non-solid.
+- `chunk.js`: 4th mesher layer (portal), drawn like water (exposed faces only).
+- `world.js`: translucent glowing portal material; `lightPortal()` +
+  `_tryLightPlane()` — flood-fills the interior air in either vertical plane,
+  validates it's a full rectangle (2–4 × 3–5) bounded by obsidian, and fills it
+  with portal blocks. `portalCount`.
+- `main.js`: press **F** while aiming at a frame to ignite; `buildTestPortal()`
+  debug helper builds + lights a frame for the smoke test.
+- Smoke asserts an obsidian frame ignites into a ≥6-block portal.
+
+Results: 8/8 unit, 14/14 smoke. Frame → 6-block portal confirmed headlessly.
+
+Next: stepping into the portal transports the player to a generated Nether
+dimension — the finish line.
+
 ## 2026-06-27 — Obsidian
 **Goal:** the block a Nether portal is built from (ingredient #3).
 

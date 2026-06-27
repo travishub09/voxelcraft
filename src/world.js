@@ -28,6 +28,11 @@ export class World {
     this.lavaMaterial = new THREE.MeshLambertMaterial({
       map: tex, emissive: 0xff7a18, emissiveMap: tex, emissiveIntensity: 0.9,
     });
+    // Portal: translucent glowing purple.
+    this.portalMaterial = new THREE.MeshLambertMaterial({
+      map: tex, transparent: true, opacity: 0.7, depthWrite: false,
+      emissive: 0xa13bd6, emissiveMap: tex, emissiveIntensity: 0.8,
+    });
 
     this._createChunks();
   }
@@ -112,10 +117,10 @@ export class World {
     return x >= 0 && y >= 0 && z >= 0 && x < this.sx && y < this.sy && z < this.sz;
   }
 
-  // Solid = blocks the player. Air and fluids (water/lava) don't.
+  // Solid = blocks the player. Air, fluids and portal don't.
   isSolid(x, y, z) {
     const t = this.get(x, y, z);
-    return t !== BLOCK.AIR && t !== BLOCK.WATER && t !== BLOCK.LAVA;
+    return t !== BLOCK.AIR && t !== BLOCK.WATER && t !== BLOCK.LAVA && t !== BLOCK.PORTAL;
   }
 
   get(x, y, z) {
@@ -152,6 +157,67 @@ export class World {
       const c = this.chunks.get(k);
       if (c) this.remeshChunk(c);
     }
+  }
+
+  // Attempt to ignite a Nether portal at an interior air cell. Tries both
+  // vertical orientations (frame in the X-Y plane or the Z-Y plane). Returns
+  // the number of portal blocks created (0 if there's no valid obsidian frame).
+  lightPortal(x, y, z) {
+    if (this.get(x, y, z) !== BLOCK.AIR) return 0;
+    return this._tryLightPlane(x, y, z, "z") || this._tryLightPlane(x, y, z, "x");
+  }
+
+  _tryLightPlane(sx, sy, sz, across) {
+    // Flood-fill the connected air region within the plane (the `across` axis
+    // and Y vary; the third axis is fixed). Stop at any non-air boundary.
+    const cells = [];
+    const seen = new Set();
+    const stack = [[sx, sy, sz]];
+    const MAX = 30;
+    const key = (a, b, c) => a + "," + b + "," + c;
+
+    while (stack.length) {
+      const [x, y, z] = stack.pop();
+      const k = key(x, y, z);
+      if (seen.has(k)) continue;
+      seen.add(k);
+      if (!this.inBounds(x, y, z) || this.get(x, y, z) !== BLOCK.AIR) continue; // boundary
+      cells.push([x, y, z]);
+      if (cells.length > MAX) return 0; // opening too large
+      stack.push([x, y + 1, z], [x, y - 1, z]);
+      if (across === "z") stack.push([x + 1, y, z], [x - 1, y, z]);
+      else stack.push([x, y, z + 1], [x, y, z - 1]);
+    }
+    if (cells.length < 6) return 0; // need at least 2x3 interior
+
+    // Bounding box across the two varying axes.
+    let minY = Infinity, maxY = -Infinity, minA = Infinity, maxA = -Infinity;
+    const aOf = ([x, , z]) => (across === "z" ? x : z);
+    for (const c of cells) {
+      minY = Math.min(minY, c[1]); maxY = Math.max(maxY, c[1]);
+      const a = aOf(c); minA = Math.min(minA, a); maxA = Math.max(maxA, a);
+    }
+    const w = maxA - minA + 1, h = maxY - minY + 1;
+    if (w < 2 || w > 4 || h < 3 || h > 5) return 0;
+    if (cells.length !== w * h) return 0; // interior must be a full rectangle
+
+    // Frame check: obsidian directly left/right of each row and above/below
+    // each column (corners not required).
+    const fixed = across === "z" ? sz : sx;
+    const at = (a, y) => (across === "z" ? this.get(a, y, fixed) : this.get(fixed, y, a));
+    for (let y = minY; y <= maxY; y++) {
+      if (at(minA - 1, y) !== BLOCK.OBSIDIAN) return 0;
+      if (at(maxA + 1, y) !== BLOCK.OBSIDIAN) return 0;
+    }
+    for (let a = minA; a <= maxA; a++) {
+      if (at(a, minY - 1) !== BLOCK.OBSIDIAN) return 0;
+      if (at(a, maxY + 1) !== BLOCK.OBSIDIAN) return 0;
+    }
+
+    // Valid frame — fill the interior with portal blocks.
+    for (const [x, y, z] of cells) this.setBlock(x, y, z, BLOCK.PORTAL);
+    this.portalCount = (this.portalCount || 0) + cells.length;
+    return cells.length;
   }
 
   // Surface height at world (x, z). Baseline dips below sea level in valleys
@@ -214,7 +280,7 @@ export class World {
   }
 
   remeshChunk(chunk) {
-    const { opaque, water, lava } = buildChunkGeometries(this, chunk);
+    const { opaque, water, lava, portal } = buildChunkGeometries(this, chunk);
     const px = chunk.cx * CHUNK_SIZE, pz = chunk.cz * CHUNK_SIZE;
 
     if (chunk.mesh) {
@@ -228,6 +294,7 @@ export class World {
 
     this._updateLayerMesh(chunk, "waterMesh", water, this.waterMaterial, px, pz);
     this._updateLayerMesh(chunk, "lavaMesh", lava, this.lavaMaterial, px, pz);
+    this._updateLayerMesh(chunk, "portalMesh", portal, this.portalMaterial, px, pz);
     chunk.dirty = false;
   }
 

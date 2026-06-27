@@ -117,6 +117,10 @@ try {
   if (state.obsidianCount > 0) ok(`obsidian deposits generated (${state.obsidianCount})`);
   else fail("no obsidian generated");
 
+  const portalLit = await page.evaluate(() => window.__VOXELCRAFT__.buildTestPortal());
+  if (portalLit >= 6) ok(`obsidian frame ignites into a portal (${portalLit} blocks)`);
+  else fail(`portal failed to light (returned ${portalLit})`);
+
   if (t1 > t0) ok(`day/night cycle advancing (t ${t0.toFixed(4)} -> ${t1.toFixed(4)})`);
   else fail(`time not advancing (t ${t0} -> ${t1})`);
 

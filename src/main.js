@@ -101,6 +101,20 @@ document.addEventListener("mousedown", (e) => {
 
 document.addEventListener("contextmenu", (e) => e.preventDefault());
 
+// Light a Nether portal: press F while looking at an obsidian frame's interior.
+window.addEventListener("keydown", (e) => {
+  if (e.code !== "KeyF" || !player.locked) return;
+  const hit = raycastVoxel();
+  if (!hit) return;
+  const n = world.lightPortal(hit.place[0], hit.place[1], hit.place[2]) ||
+            world.lightPortal(hit.block[0], hit.block[1], hit.block[2]);
+  if (n > 0) flash(`Portal lit (${n} blocks)`);
+});
+
+function flash(msg) {
+  clockEl.textContent = "✨ " + msg;
+}
+
 function playerOccupies(x, y, z) {
   const p = player.position;
   const hw = player.halfWidth;
@@ -124,8 +138,28 @@ window.addEventListener("resize", () => {
 });
 
 // --- Debug hook (used by the headless smoke test) ---
+// Build an obsidian frame in the air above spawn and light it. Used by the
+// smoke test to verify portal creation deterministically.
+function buildTestPortal() {
+  const bx = spawnX, bz = spawnZ, by = world.sy - 8;
+  // Frame: interior 2 wide (bx..bx+1) x 3 tall (by..by+2), plane z = bz.
+  for (let y = by - 1; y <= by + 3; y++) {
+    world.setBlock(bx - 1, y, bz, BLOCK.OBSIDIAN);
+    world.setBlock(bx + 2, y, bz, BLOCK.OBSIDIAN);
+  }
+  for (let x = bx - 1; x <= bx + 2; x++) {
+    world.setBlock(x, by - 1, bz, BLOCK.OBSIDIAN);
+    world.setBlock(x, by + 3, bz, BLOCK.OBSIDIAN);
+  }
+  // Clear interior to air, then ignite.
+  for (let x = bx; x <= bx + 1; x++)
+    for (let y = by; y <= by + 2; y++) world.setBlock(x, y, bz, BLOCK.AIR);
+  return world.lightPortal(bx, by, bz);
+}
+
 window.__VOXELCRAFT__ = {
   ready: false,
+  buildTestPortal,
   get state() {
     return {
       chunkCount: world.chunks.size,
@@ -134,6 +168,7 @@ window.__VOXELCRAFT__ = {
       waterCount: world.waterCount,
       lavaCount: world.lavaCount,
       obsidianCount: world.obsidianCount,
+      portalCount: world.portalCount || 0,
       worldSize: [world.sx, world.sy, world.sz],
       sampleHeights: [
         world.heightAt(8, 8),
