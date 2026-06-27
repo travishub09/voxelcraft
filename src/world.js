@@ -7,10 +7,11 @@ import { terrainHeight, cellRandom, isCave } from "./noise.js";
 // the world routes reads/writes to the owning chunk and re-meshes only the
 // chunks affected by an edit.
 export class World {
-  constructor({ chunksX = 6, chunksZ = 6, seed = 1337 } = {}) {
+  constructor({ chunksX = 6, chunksZ = 6, seed = 1337, mode = "overworld" } = {}) {
     this.chunksX = chunksX;
     this.chunksZ = chunksZ;
     this.seed = seed;
+    this.mode = mode;
     this.sx = chunksX * CHUNK_SIZE;
     this.sy = WORLD_HEIGHT;
     this.sz = chunksZ * CHUNK_SIZE;
@@ -32,6 +33,10 @@ export class World {
     this.portalMaterial = new THREE.MeshLambertMaterial({
       map: tex, transparent: true, opacity: 0.7, depthWrite: false,
       emissive: 0xa13bd6, emissiveMap: tex, emissiveIntensity: 0.8,
+    });
+    // Glowstone glows yellow.
+    this.glowMaterial = new THREE.MeshLambertMaterial({
+      map: tex, emissive: 0xffd76b, emissiveMap: tex, emissiveIntensity: 0.9,
     });
 
     this._createChunks();
@@ -65,9 +70,53 @@ export class World {
     this.waterCount = 0;
     this.lavaCount = 0;
     this.obsidianCount = 0;
-    for (const chunk of this.chunks.values()) this.generateChunk(chunk);
-    this.decorateTrees();
+    this.netherrackCount = 0;
+    this.glowstoneCount = 0;
+    const nether = this.mode === "nether";
+    for (const chunk of this.chunks.values()) {
+      nether ? this.generateNetherChunk(chunk) : this.generateChunk(chunk);
+    }
+    if (!nether) this.decorateTrees();
     for (const chunk of this.chunks.values()) this.remeshChunk(chunk);
+  }
+
+  // Nether terrain: netherrack landmass with lava seas, a netherrack ceiling,
+  // carved caverns, and glowstone clusters under the roof.
+  generateNetherChunk(chunk) {
+    const ox = chunk.cx * CHUNK_SIZE, oz = chunk.cz * CHUNK_SIZE;
+    const ceil = this.sy - 1;           // solid roof at the very top
+    const roofThickness = 3;
+    const netherSea = 9;
+    for (let x = 0; x < CHUNK_SIZE; x++) {
+      for (let z = 0; z < CHUNK_SIZE; z++) {
+        const wx = ox + x, wz = oz + z;
+        const floorH = terrainHeight(wx, wz, { seed: this.seed + 700, minH: 3, maxH: 13 });
+
+        // Solid netherrack floor.
+        for (let y = 0; y <= floorH; y++) { chunk.setLocal(x, y, z, BLOCK.NETHERRACK); this.netherrackCount++; }
+        // Lava seas filling low ground.
+        for (let y = floorH + 1; y <= netherSea; y++) { chunk.setLocal(x, y, z, BLOCK.LAVA); this.lavaCount++; }
+        // Netherrack ceiling slab.
+        for (let y = ceil - roofThickness + 1; y <= ceil; y++) { chunk.setLocal(x, y, z, BLOCK.NETHERRACK); this.netherrackCount++; }
+
+        // Carve caverns through the netherrack floor.
+        for (let y = 1; y <= floorH - 1; y++) {
+          if (isCave(wx, y, wz, { seed: this.seed + 700, threshold: 0.66 })) {
+            chunk.setLocal(x, y, z, BLOCK.AIR);
+            this.caveCount++;
+          }
+        }
+
+        // Glowstone clusters embedded in the underside of the roof.
+        const roofY = ceil - roofThickness;
+        if (cellRandom(wx, wz, this.seed ^ 0x6107) < 0.04) {
+          chunk.setLocal(x, roofY, z, BLOCK.GLOWSTONE); this.glowstoneCount++;
+          if (cellRandom(wx, wz, this.seed ^ 0x6108) < 0.5) {
+            chunk.setLocal(x, roofY - 1, z, BLOCK.GLOWSTONE); this.glowstoneCount++;
+          }
+        }
+      }
+    }
   }
 
   // Scatter trees on grass columns using a deterministic per-cell random.
@@ -280,7 +329,7 @@ export class World {
   }
 
   remeshChunk(chunk) {
-    const { opaque, water, lava, portal } = buildChunkGeometries(this, chunk);
+    const { opaque, water, lava, portal, glow } = buildChunkGeometries(this, chunk);
     const px = chunk.cx * CHUNK_SIZE, pz = chunk.cz * CHUNK_SIZE;
 
     if (chunk.mesh) {
@@ -295,6 +344,7 @@ export class World {
     this._updateLayerMesh(chunk, "waterMesh", water, this.waterMaterial, px, pz);
     this._updateLayerMesh(chunk, "lavaMesh", lava, this.lavaMaterial, px, pz);
     this._updateLayerMesh(chunk, "portalMesh", portal, this.portalMaterial, px, pz);
+    this._updateLayerMesh(chunk, "glowMesh", glow, this.glowMaterial, px, pz);
     chunk.dirty = false;
   }
 

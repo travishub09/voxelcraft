@@ -29,9 +29,18 @@ Tech stack: **Three.js + Vite** (browser-based, zero-install to run).
 ## 🌅 Phase 3 — Atmosphere & systems
 - [x] Day/night cycle
 - [x] Water
+- [x] Lava
 - [ ] Sound effects
 - [ ] Save/load world (localStorage)
 - [ ] Main menu
+
+## 🔥 Phase 4 — The Nether (done)
+- [x] Obsidian (placeable + natural deposits)
+- [x] Nether portal frame detection + ignition
+- [x] Nether dimension (netherrack, lava seas, glowstone)
+- [x] Portal travel between dimensions
+- [ ] Return-portal linking by coordinates (currently one arrival portal/dim)
+- [ ] Nether mobs, soul sand, fortresses (future)
 
 ## ⚙️ Cross-cutting
 - [ ] Performance: per-chunk meshing, frustum culling, greedy meshing

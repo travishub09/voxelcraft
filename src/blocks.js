@@ -13,6 +13,8 @@ export const BLOCK = {
   LAVA: 7,
   OBSIDIAN: 8,
   PORTAL: 9,
+  NETHERRACK: 10,
+  GLOWSTONE: 11,
 };
 
 // Opaque blocks fully hide the faces behind them. Air, water and portal don't.
@@ -38,6 +40,8 @@ export const BLOCK_NAMES = {
   [BLOCK.LAVA]: "lava",
   [BLOCK.OBSIDIAN]: "obsidian",
   [BLOCK.PORTAL]: "portal",
+  [BLOCK.NETHERRACK]: "netherrack",
+  [BLOCK.GLOWSTONE]: "glowstone",
 };
 
 // Tile indices into the atlas (assigned as tiles are registered below).
@@ -91,6 +95,8 @@ const T_WATER = tile((ctx) => noise(ctx, "#2f6fd0", ["#2a64bd", "#3a7ce0", "#2d6
 const T_LAVA = tile((ctx) => noise(ctx, "#e25822", ["#c33a10", "#ff8c1a", "#ffb733"], 8));
 const T_OBSIDIAN = tile((ctx) => noise(ctx, "#15101f", ["#0d0a16", "#241a33", "#1a1226"], 9));
 const T_PORTAL = tile((ctx) => noise(ctx, "#a13bd6", ["#7d22b0", "#c45cf0", "#8e2bc2"], 10));
+const T_NETHERRACK = tile((ctx) => noise(ctx, "#6e1f1f", ["#5a1717", "#822828", "#641b1b"], 11));
+const T_GLOWSTONE = tile((ctx) => noise(ctx, "#e8b53a", ["#caa028", "#ffd76b", "#d8a82f"], 12));
 
 // faces order: [px, nx, py, ny, pz, nz] -> +X,-X,+Y(top),-Y(bottom),+Z,-Z
 export const BLOCK_TILES = {
@@ -103,6 +109,8 @@ export const BLOCK_TILES = {
   [BLOCK.LAVA]:  [T_LAVA, T_LAVA, T_LAVA, T_LAVA, T_LAVA, T_LAVA],
   [BLOCK.OBSIDIAN]: [T_OBSIDIAN, T_OBSIDIAN, T_OBSIDIAN, T_OBSIDIAN, T_OBSIDIAN, T_OBSIDIAN],
   [BLOCK.PORTAL]: [T_PORTAL, T_PORTAL, T_PORTAL, T_PORTAL, T_PORTAL, T_PORTAL],
+  [BLOCK.NETHERRACK]: [T_NETHERRACK, T_NETHERRACK, T_NETHERRACK, T_NETHERRACK, T_NETHERRACK, T_NETHERRACK],
+  [BLOCK.GLOWSTONE]: [T_GLOWSTONE, T_GLOWSTONE, T_GLOWSTONE, T_GLOWSTONE, T_GLOWSTONE, T_GLOWSTONE],
 };
 
 export const TILE_COUNT = tiles.length;

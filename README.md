@@ -7,12 +7,17 @@ A Minecraft-inspired voxel game built from scratch with **Three.js** + **Vite**.
 ## Features (current)
 
 - 3D voxel world split into chunks, rendered with face-culled meshes
-- **Procedural terrain** from fractal (fBm) value noise
+- **Procedural terrain** from fractal (fBm) value noise, with **caves** (3D noise)
+- **Oceans/lakes** (transparent water) and **lava seas** (emissive)
+- **Trees** scattered across the surface
+- **Day/night cycle** — moving sun, shifting sky, on-screen clock
+- **Nether dimension** — build an obsidian portal, light it, and travel to a
+  generated Nether (netherrack, lava seas, glowing glowstone, red fog)
 - First-person camera with pointer-lock mouse look
-- WASD movement, jumping, gravity, and AABB voxel collision
+- WASD movement, jumping, gravity, AABB voxel collision; wade through fluids
 - Break blocks (left click) and place blocks (right click) — only the edited
   chunk re-meshes
-- Block selection: grass, dirt, stone, wood
+- Visual hotbar: grass, dirt, stone, wood, leaves, obsidian
 - Procedurally generated textures (no external assets)
 
 ## Requirements
@@ -52,19 +57,37 @@ npm run smoke # boots the built game in headless Chromium and checks it renders
 | Space | Jump |
 | Left click | Break block |
 | Right click | Place block |
-| 1 – 4 | Select block (grass / dirt / stone / wood) |
+| 1 – 6 / scroll | Select block (grass / dirt / stone / wood / leaves / obsidian) |
+| F | Light a Nether portal (aim at an obsidian frame) |
 | Esc | Release mouse |
+
+### Building a Nether portal
+
+1. Select **obsidian** (hotbar slot 6) and build a vertical rectangular frame —
+   a 2×3 interior works (4 wide × 5 tall including the frame).
+2. Aim at the interior and press **F** to light it.
+3. Walk into the glowing purple portal to travel to the Nether. Walk back into
+   the portal on the other side to return.
+
+Obsidian also occurs naturally in deposits just above the lava layer deep
+underground.
 
 ## Project structure
 
 ```
 voxelcraft/
-├── index.html      # canvas, crosshair, HUD, start overlay
+├── index.html      # canvas, crosshair, clock, hotbar, start overlay
 ├── src/
-│   ├── main.js     # renderer, scene, raycasting, game loop
-│   ├── world.js    # voxel storage + face-culled mesher
+│   ├── main.js     # renderer, scene, raycasting, dimensions, game loop
+│   ├── world.js    # chunk manager, terrain/nether gen, portal lighting
+│   ├── chunk.js    # chunk storage + layered (opaque/water/lava/portal/glow) mesher
 │   ├── player.js   # first-person controller + physics/collision
-│   └── blocks.js   # block types + procedural texture atlas
+│   ├── blocks.js   # block types + procedural texture atlas + icons
+│   ├── noise.js    # value noise / fBm (2D + 3D) for terrain & caves
+│   ├── hotbar.js   # hotbar UI
+│   └── daynight.js # day/night cycle
+├── scripts/smoke.mjs # headless-Chromium smoke test
+├── test/           # Node unit tests (noise/terrain/caves)
 ├── ROADMAP.md      # planned features
 ├── DEVLOG.md       # development history
 └── TODO.md         # active task list

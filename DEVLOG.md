@@ -2,6 +2,31 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — 🔥 The Nether dimension (milestone)
+**Goal:** stepping through a lit portal transports the player to a generated
+Nether — the natural finish line for the water→lava→obsidian→portal arc.
+
+Implemented:
+- `blocks.js`: `NETHERRACK` + `GLOWSTONE` blocks/tiles.
+- `chunk.js`: 5th mesher layer (glowstone, emissive).
+- `world.js`: `mode: "overworld" | "nether"`; `generateNetherChunk()` — solid
+  netherrack floor, lava seas in valleys, a netherrack ceiling slab, carved
+  caverns, and glowstone clusters under the roof; glowstone emissive material.
+- `main.js`: dimension manager — `overworld` + lazily-built `nether` World;
+  `travel()` swaps the active world's group, builds an arrival portal +
+  standing platform on the far side, repositions the player, and sets the
+  dimension atmosphere (Nether = dark-red fog, dim red light; Overworld = the
+  day/night cycle). Portal entry is **edge-triggered** (rising edge of standing
+  in a portal block) with a cooldown, so you don't bounce back and forth.
+  `createPortal()` builds a full frame+platform and lights it; `enterNether()`
+  debug hook for the smoke test.
+- Smoke asserts: travel switches to the Nether, netherrack generated, and no
+  errors during the dimension switch.
+
+Results: 8/8 unit, 17/17 smoke. Nether reached headlessly with ~116k
+netherrack, 558 glowstone, ~4.9k lava — no errors. **Goal met: a Nether was
+reached naturally through the build-up of fluids, obsidian, and portals.**
+
 ## 2026-06-27 — Nether portal (frame detection + ignition)
 **Goal:** build an obsidian frame and light it into a portal.
 

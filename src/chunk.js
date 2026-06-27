@@ -24,6 +24,7 @@ export class Chunk {
     this.waterMesh = null;
     this.lavaMesh = null;
     this.portalMesh = null;
+    this.glowMesh = null;
     this.dirty = true;
   }
 
@@ -64,6 +65,7 @@ export function buildChunkGeometries(world, chunk) {
   const water = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
   const lava = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
   const portal = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
+  const glow = { positions: [], normals: [], uvs: [], indices: [], vert: 0 };
 
   const ox = chunk.cx * CHUNK_SIZE;
   const oz = chunk.cz * CHUNK_SIZE;
@@ -87,7 +89,8 @@ export function buildChunkGeometries(world, chunk) {
         const isWater = type === BLOCK.WATER;
         const isLava = type === BLOCK.LAVA;
         const isPortal = type === BLOCK.PORTAL;
-        const buf = isWater ? water : isLava ? lava : isPortal ? portal : opaque;
+        const isGlow = type === BLOCK.GLOWSTONE;
+        const buf = isWater ? water : isLava ? lava : isPortal ? portal : isGlow ? glow : opaque;
         const faceTiles = BLOCK_TILES[type];
 
         for (let f = 0; f < FACES.length; f++) {
@@ -116,5 +119,6 @@ export function buildChunkGeometries(world, chunk) {
     water: water.vert > 0 ? makeGeometry(water) : null,
     lava: lava.vert > 0 ? makeGeometry(lava) : null,
     portal: portal.vert > 0 ? makeGeometry(portal) : null,
+    glow: glow.vert > 0 ? makeGeometry(glow) : null,
   };
 }

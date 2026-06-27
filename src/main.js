@@ -29,8 +29,11 @@ const ambient = new THREE.AmbientLight(0xffffff, 0.55);
 scene.add(ambient);
 const dayNight = new DayNight(scene, sun, ambient);
 
-// --- World ---
-const world = new World();
+// --- Worlds / dimensions ---
+const overworld = new World();
+let nether = null;            // built lazily on first portal travel
+let world = overworld;        // the active dimension
+let dimension = "overworld";
 scene.add(world.group);
 
 // --- Player ---
@@ -115,6 +118,95 @@ function flash(msg) {
   clockEl.textContent = "✨ " + msg;
 }
 
+// --- Dimensions: portal travel between the Overworld and the Nether ---
+const portalReturn = {};   // dimension -> {x,y,z} arrival point
+let portalCooldown = 0;
+let inPortalLastFrame = false;
+
+// Build a complete obsidian portal (frame + platform + lit interior) in `w`
+// around base (bx,by,bz); the frame lies in the X-Y plane at z = bz.
+function createPortal(w, bx, by, bz) {
+  const ground = w.mode === "nether" ? BLOCK.NETHERRACK : BLOCK.STONE;
+  // Clear a pocket and lay a standing platform (extends in +z so you can
+  // stand in front of the portal after arriving).
+  for (let dx = -1; dx <= 2; dx++)
+    for (let dz = -1; dz <= 2; dz++) {
+      w.setBlock(bx + dx, by - 2, bz + dz, ground);
+      for (let dy = -1; dy <= 4; dy++) w.setBlock(bx + dx, by + dy, bz + dz, BLOCK.AIR);
+    }
+  // Obsidian frame.
+  for (let y = by - 1; y <= by + 3; y++) {
+    w.setBlock(bx - 1, y, bz, BLOCK.OBSIDIAN);
+    w.setBlock(bx + 2, y, bz, BLOCK.OBSIDIAN);
+  }
+  for (let x = bx - 1; x <= bx + 2; x++) {
+    w.setBlock(x, by - 1, bz, BLOCK.OBSIDIAN);
+    w.setBlock(x, by + 3, bz, BLOCK.OBSIDIAN);
+  }
+  w.lightPortal(bx, by, bz);
+  return { x: bx + 0.5, y: by, z: bz + 1.5 }; // stand on the platform in front
+}
+
+function applyAtmosphere(dim) {
+  if (dim === "nether") {
+    scene.background.set(0x2a0a0a);
+    scene.fog.color.set(0x2a0a0a);
+    scene.fog.near = 8; scene.fog.far = 50;
+    sun.color.set(0xff7744); sun.intensity = 0.3;
+    ambient.color.set(0xff8866); ambient.intensity = 0.55;
+  } else {
+    scene.fog.near = 40; scene.fog.far = 80;
+    sun.color.set(0xffffff); ambient.color.set(0xffffff);
+    // dayNight drives sky colour + intensities each frame.
+  }
+}
+
+function isPlayerInPortal() {
+  const p = player.position;
+  const x = Math.floor(p.x), z = Math.floor(p.z);
+  return world.get(x, Math.floor(p.y + 0.1), z) === BLOCK.PORTAL ||
+         world.get(x, Math.floor(p.y + 1.0), z) === BLOCK.PORTAL;
+}
+
+// Transport the player to the other dimension, creating it / an arrival portal
+// on first visit. Returns the destination dimension name.
+function travel() {
+  const target = dimension === "overworld" ? "nether" : "overworld";
+
+  // Remember where to return to in the dimension we're leaving.
+  if (!portalReturn[dimension]) {
+    portalReturn[dimension] = {
+      x: player.position.x, y: player.position.y, z: player.position.z,
+    };
+  }
+
+  if (target === "nether" && !nether) nether = new World({ mode: "nether" });
+  const targetWorld = target === "nether" ? nether : overworld;
+
+  // Ensure an arrival portal exists on the far side.
+  if (!portalReturn[target]) {
+    const cx = Math.min(Math.max(Math.floor(player.position.x), 3), targetWorld.sx - 4);
+    const cz = Math.min(Math.max(Math.floor(player.position.z), 2), targetWorld.sz - 3);
+    const by = target === "nether" ? 11 : targetWorld.heightAt(cx, cz) + 1;
+    portalReturn[target] = createPortal(targetWorld, cx, by, cz);
+  }
+
+  // Swap the active world.
+  scene.remove(world.group);
+  world = targetWorld;
+  scene.add(world.group);
+  player.world = world;
+  dimension = target;
+
+  const a = portalReturn[target];
+  player.position.set(a.x, a.y, a.z);
+  player.velocity.set(0, 0, 0);
+  applyAtmosphere(target);
+  portalCooldown = 1.0;
+  inPortalLastFrame = true; // don't immediately re-trigger on arrival
+  return target;
+}
+
 function playerOccupies(x, y, z) {
   const p = player.position;
   const hw = player.halfWidth;
@@ -160,20 +252,31 @@ function buildTestPortal() {
 window.__VOXELCRAFT__ = {
   ready: false,
   buildTestPortal,
+  // Programmatically travel to the Nether (used by the smoke test).
+  enterNether() {
+    if (dimension !== "nether") travel();
+    return {
+      dimension,
+      netherrack: world.netherrackCount || 0,
+      glowstone: world.glowstoneCount || 0,
+      lava: world.lavaCount || 0,
+    };
+  },
   get state() {
     return {
+      dimension,
       chunkCount: world.chunks.size,
-      treeCount: world.treeCount,
-      caveCount: world.caveCount,
-      waterCount: world.waterCount,
-      lavaCount: world.lavaCount,
-      obsidianCount: world.obsidianCount,
-      portalCount: world.portalCount || 0,
+      treeCount: overworld.treeCount,
+      caveCount: overworld.caveCount,
+      waterCount: overworld.waterCount,
+      lavaCount: overworld.lavaCount,
+      obsidianCount: overworld.obsidianCount,
+      portalCount: overworld.portalCount || 0,
       worldSize: [world.sx, world.sy, world.sz],
       sampleHeights: [
-        world.heightAt(8, 8),
-        world.heightAt(40, 40),
-        world.heightAt(80, 12),
+        overworld.heightAt(8, 8),
+        overworld.heightAt(40, 40),
+        overworld.heightAt(80, 12),
       ],
       drawCalls: renderer.info.render.calls,
       triangles: renderer.info.render.triangles,
@@ -189,8 +292,24 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05); // clamp to avoid tunneling on lag
   player.update(dt);
-  dayNight.update(dt);
-  clockEl.textContent = "🕐 " + dayNight.clock;
+
+  // Portal travel: trigger on the rising edge of entering a portal block.
+  if (portalCooldown > 0) portalCooldown -= dt;
+  const nowInPortal = isPlayerInPortal();
+  if (nowInPortal && !inPortalLastFrame && portalCooldown <= 0) {
+    const dest = travel();
+    flash(dest === "nether" ? "Entering the NETHER" : "Back to the Overworld");
+  } else {
+    inPortalLastFrame = nowInPortal;
+  }
+
+  if (dimension === "overworld") {
+    dayNight.update(dt);
+    clockEl.textContent = "🕐 " + dayNight.clock;
+  } else {
+    clockEl.textContent = "🔥 NETHER";
+  }
+
   renderer.render(scene, camera);
   window.__VOXELCRAFT__.ready = true;
 }

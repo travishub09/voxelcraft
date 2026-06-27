@@ -121,6 +121,16 @@ try {
   if (portalLit >= 6) ok(`obsidian frame ignites into a portal (${portalLit} blocks)`);
   else fail(`portal failed to light (returned ${portalLit})`);
 
+  const nether = await page.evaluate(() => window.__VOXELCRAFT__.enterNether());
+  await sleep(400);
+  const errAfter = errors.length;
+  if (nether.dimension === "nether") ok("travelled to the Nether dimension");
+  else fail(`did not enter Nether (dimension=${nether.dimension})`);
+  if (nether.netherrack > 0) ok(`Nether generated (${nether.netherrack} netherrack, ${nether.glowstone} glowstone, ${nether.lava} lava)`);
+  else fail("Nether has no netherrack");
+  if (errAfter === 0) ok("no errors during dimension switch");
+  else fail("errors during dimension switch");
+
   if (t1 > t0) ok(`day/night cycle advancing (t ${t0.toFixed(4)} -> ${t1.toFixed(4)})`);
   else fail(`time not advancing (t ${t0} -> ${t1})`);
 
