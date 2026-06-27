@@ -15,7 +15,17 @@ export const BLOCK = {
   PORTAL: 9,
   NETHERRACK: 10,
   GLOWSTONE: 11,
+  PLANKS: 12,
+  CRAFTING_TABLE: 13,
+  TORCH: 14,
+  STICK: 15, // an item, not a placeable block
 };
+
+// Items that cannot be placed as blocks in the world.
+const NON_PLACEABLE = new Set([BLOCK.AIR, BLOCK.WATER, BLOCK.LAVA, BLOCK.PORTAL, BLOCK.STICK]);
+export function isPlaceableBlock(type) {
+  return !NON_PLACEABLE.has(type);
+}
 
 // Opaque blocks fully hide the faces behind them. Air, water and portal don't.
 export function isOpaque(type) {
@@ -42,6 +52,10 @@ export const BLOCK_NAMES = {
   [BLOCK.PORTAL]: "portal",
   [BLOCK.NETHERRACK]: "netherrack",
   [BLOCK.GLOWSTONE]: "glowstone",
+  [BLOCK.PLANKS]: "planks",
+  [BLOCK.CRAFTING_TABLE]: "crafting table",
+  [BLOCK.TORCH]: "torch",
+  [BLOCK.STICK]: "stick",
 };
 
 // Tile indices into the atlas (assigned as tiles are registered below).
@@ -97,6 +111,30 @@ const T_OBSIDIAN = tile((ctx) => noise(ctx, "#15101f", ["#0d0a16", "#241a33", "#
 const T_PORTAL = tile((ctx) => noise(ctx, "#a13bd6", ["#7d22b0", "#c45cf0", "#8e2bc2"], 10));
 const T_NETHERRACK = tile((ctx) => noise(ctx, "#6e1f1f", ["#5a1717", "#822828", "#641b1b"], 11));
 const T_GLOWSTONE = tile((ctx) => noise(ctx, "#e8b53a", ["#caa028", "#ffd76b", "#d8a82f"], 12));
+const T_PLANKS = tile((ctx) => {
+  noise(ctx, "#b88a4e", ["#a87c42", "#c89a5c", "#b08246"], 13);
+  ctx.strokeStyle = "#8a6638"; ctx.lineWidth = 1;
+  for (const y of [4, 8, 12]) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(16, y); ctx.stroke(); }
+});
+const T_CRAFT = tile((ctx) => {
+  noise(ctx, "#b88a4e", ["#a87c42", "#c89a5c", "#b08246"], 13);
+  ctx.strokeStyle = "#5a3f22"; ctx.lineWidth = 1;
+  for (const v of [5, 10]) {
+    ctx.beginPath(); ctx.moveTo(v, 0); ctx.lineTo(v, 16); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, v); ctx.lineTo(16, v); ctx.stroke();
+  }
+});
+const T_TORCH = tile((ctx) => {
+  noise(ctx, "#6b4a2b", ["#5c3f25", "#7a5634", "#654328"], 4);
+  // glowing tip
+  ctx.fillStyle = "#ffd76b";
+  for (let x = 6; x <= 9; x++) for (let y = 1; y <= 4; y++) fill(ctx, x, y, "#ffd76b");
+});
+const T_STICK = tile((ctx) => {
+  noise(ctx, "#3a2a18", ["#332518", "#43301c", "#392a18"], 14);
+  ctx.fillStyle = "#7a5634";
+  for (let y = 1; y < 15; y++) { fill(ctx, 7, y, "#7a5634"); fill(ctx, 8, y, "#8a6238"); }
+});
 
 // faces order: [px, nx, py, ny, pz, nz] -> +X,-X,+Y(top),-Y(bottom),+Z,-Z
 export const BLOCK_TILES = {
@@ -111,6 +149,10 @@ export const BLOCK_TILES = {
   [BLOCK.PORTAL]: [T_PORTAL, T_PORTAL, T_PORTAL, T_PORTAL, T_PORTAL, T_PORTAL],
   [BLOCK.NETHERRACK]: [T_NETHERRACK, T_NETHERRACK, T_NETHERRACK, T_NETHERRACK, T_NETHERRACK, T_NETHERRACK],
   [BLOCK.GLOWSTONE]: [T_GLOWSTONE, T_GLOWSTONE, T_GLOWSTONE, T_GLOWSTONE, T_GLOWSTONE, T_GLOWSTONE],
+  [BLOCK.PLANKS]: [T_PLANKS, T_PLANKS, T_PLANKS, T_PLANKS, T_PLANKS, T_PLANKS],
+  [BLOCK.CRAFTING_TABLE]: [T_CRAFT, T_CRAFT, T_CRAFT, T_CRAFT, T_CRAFT, T_CRAFT],
+  [BLOCK.TORCH]: [T_TORCH, T_TORCH, T_TORCH, T_TORCH, T_TORCH, T_TORCH],
+  [BLOCK.STICK]: [T_STICK, T_STICK, T_STICK, T_STICK, T_STICK, T_STICK],
 };
 
 export const TILE_COUNT = tiles.length;

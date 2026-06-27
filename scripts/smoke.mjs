@@ -121,6 +121,14 @@ try {
   if (collect.after === collect.before + 1) ok(`breaking a block collects it (${collect.before} -> ${collect.after})`);
   else fail(`break did not collect (${collect.before} -> ${collect.after})`);
 
+  const recipes = await page.evaluate(() => window.__VOXELCRAFT__.inspectCrafting());
+  if (recipes >= 4) ok(`crafting screen lists recipes (${recipes})`);
+  else fail(`crafting screen missing recipes (${recipes})`);
+
+  const cr = await page.evaluate(() => window.__VOXELCRAFT__.testCraft());
+  if (cr.ok && cr.after === cr.before + 4) ok(`crafting works (1 wood -> 4 planks: ${cr.before} -> ${cr.after})`);
+  else fail(`crafting failed (${JSON.stringify(cr)})`);
+
   if (state.obsidianCount > 0) ok(`obsidian deposits generated (${state.obsidianCount})`);
   else fail("no obsidian generated");
 

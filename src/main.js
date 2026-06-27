@@ -3,8 +3,10 @@ import { World } from "./world.js";
 import { Player } from "./player.js";
 import { Hotbar } from "./hotbar.js";
 import { Inventory } from "./inventory.js";
+import { InventoryUI } from "./inventoryui.js";
 import { DayNight } from "./daynight.js";
-import { BLOCK } from "./blocks.js";
+import { RECIPES, craft } from "./crafting.js";
+import { BLOCK, isPlaceableBlock } from "./blocks.js";
 
 const canvas = document.getElementById("app");
 const overlay = document.getElementById("overlay");
@@ -51,6 +53,17 @@ inventory.add(BLOCK.DIRT, 16);
 inventory.add(BLOCK.STONE, 16);
 inventory.add(BLOCK.WOOD, 16);
 const hotbar = new Hotbar(document.getElementById("hotbar"), inventory);
+const invUI = new InventoryUI(document.getElementById("inventory"), inventory);
+
+// Toggle the inventory/crafting screen with E (releases the mouse while open).
+window.addEventListener("keydown", (e) => {
+  if (e.code === "KeyE") {
+    invUI.toggle();
+    if (invUI.open && player.locked) document.exitPointerLock();
+  } else if (e.code === "Escape" && invUI.open) {
+    invUI.hide();
+  }
+});
 
 // What a broken block yields (most drop themselves).
 function dropOf(type) {
@@ -70,7 +83,7 @@ function breakBlock(x, y, z) {
 function placeBlock(x, y, z) {
   const idx = hotbar.index;
   const item = inventory.slots[idx];
-  if (!item) return false;
+  if (!item || !isPlaceableBlock(item.type)) return false;
   if (playerOccupies(x, y, z)) return false;
   if (world.get(x, y, z) !== BLOCK.AIR) return false;
   world.setBlock(x, y, z, item.type);
@@ -245,9 +258,10 @@ function playerOccupies(x, y, z) {
   );
 }
 
-// Show/hide overlay with pointer lock.
+// Show/hide the start overlay with pointer lock (but not while the inventory
+// screen is open).
 document.addEventListener("pointerlockchange", () => {
-  overlay.classList.toggle("hidden", player.locked);
+  overlay.classList.toggle("hidden", player.locked || invUI.open);
 });
 
 // --- Resize ---
@@ -288,6 +302,21 @@ window.__VOXELCRAFT__ = {
       if (world.isSolid(x, y, z)) { breakBlock(x, y, z); break; }
     }
     return { before, after: inventory.totalItems(), used: inventory.usedSlots() };
+  },
+  // Craft planks from a log (used by the smoke test).
+  testCraft() {
+    inventory.add(BLOCK.WOOD, 1);
+    const recipe = RECIPES.find((r) => r.out.type === BLOCK.PLANKS);
+    const before = inventory.count(BLOCK.PLANKS);
+    const ok = craft(inventory, recipe);
+    return { ok, before, after: inventory.count(BLOCK.PLANKS) };
+  },
+  // Open the inventory screen and report the number of recipe rows shown.
+  inspectCrafting() {
+    invUI.show();
+    const n = document.querySelectorAll("#inventory .craft-row").length;
+    invUI.hide();
+    return n;
   },
   // Programmatically travel to the Nether (used by the smoke test).
   enterNether() {
@@ -330,6 +359,14 @@ const clock = new THREE.Clock();
 function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05); // clamp to avoid tunneling on lag
+
+  // Freeze the world while the inventory screen is open.
+  if (invUI.open) {
+    renderer.render(scene, camera);
+    window.__VOXELCRAFT__.ready = true;
+    return;
+  }
+
   player.update(dt);
 
   // Portal travel: trigger on the rising edge of entering a portal block.

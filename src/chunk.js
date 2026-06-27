@@ -89,7 +89,7 @@ export function buildChunkGeometries(world, chunk) {
         const isWater = type === BLOCK.WATER;
         const isLava = type === BLOCK.LAVA;
         const isPortal = type === BLOCK.PORTAL;
-        const isGlow = type === BLOCK.GLOWSTONE;
+        const isGlow = type === BLOCK.GLOWSTONE || type === BLOCK.TORCH;
         const buf = isWater ? water : isLava ? lava : isPortal ? portal : isGlow ? glow : opaque;
         const faceTiles = BLOCK_TILES[type];
 
