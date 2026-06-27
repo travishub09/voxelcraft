@@ -1,0 +1,17 @@
+{
+  "name": "voxelcraft",
+  "version": "0.1.0",
+  "description": "A Minecraft-inspired voxel game built with Three.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^5.4.0"
+  },
+  "dependencies": {
+    "three": "^0.169.0"
+  }
+}
