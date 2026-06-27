@@ -1,7 +1,7 @@
 # TODO
 
 ## Now
-- [ ] Caves (carve with 3D noise during generation)
+- [x] Caves (3D-noise carving)
 
 ## Next
 - [x] Day/night cycle

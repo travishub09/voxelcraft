@@ -16,7 +16,7 @@ Tech stack: **Three.js + Vite** (browser-based, zero-install to run).
 - [x] Chunk system (split world into chunks)
 - [x] Procedural terrain (heightmap noise)
 - [x] Trees
-- [ ] Caves
+- [x] Caves
 - [ ] Chunk loading/unloading around the player
 
 ## 🔮 Phase 2 — Gameplay

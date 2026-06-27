@@ -130,6 +130,7 @@ window.__VOXELCRAFT__ = {
     return {
       chunkCount: world.chunks.size,
       treeCount: world.treeCount,
+      caveCount: world.caveCount,
       worldSize: [world.sx, world.sy, world.sz],
       sampleHeights: [
         world.heightAt(8, 8),

@@ -2,6 +2,24 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Caves
+**Goal:** carve underground caves into the terrain.
+
+Implemented:
+- `noise.js`: 3D value noise (`valueNoise3`), `fbm3`, and `isCave()` (carves
+  where 3D fBm exceeds a threshold).
+- `world.js`: `generateChunk()` carves subsurface voxels to AIR (keeps a 1-block
+  floor and the top 2 blocks so the surface isn't full of holes). Tracks
+  `caveCount`.
+- Tests: 3D noise range/determinism + a carve-fraction sanity bound (>0, <50%).
+- Smoke test asserts caves carved.
+
+Fix: heavy cave gen blocked the first frame and made the day/night smoke check
+flaky (sampled during a stall). Reworked that check to poll until the clock
+advances instead of a single fixed sleep.
+
+Results: 8/8 unit tests, 10/10 smoke checks. ~2.7k cave voxels, ~41.9k tris.
+
 ## 2026-06-27 — Day/night cycle
 **Goal:** animate a day/night cycle with moving sun and shifting sky.
 

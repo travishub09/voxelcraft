@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { BLOCK, buildAtlasCanvas } from "./blocks.js";
 import { Chunk, CHUNK_SIZE, WORLD_HEIGHT, buildChunkGeometry } from "./chunk.js";
-import { terrainHeight, cellRandom } from "./noise.js";
+import { terrainHeight, cellRandom, isCave } from "./noise.js";
 
 // World = a grid of chunks. Voxels are addressed in global coordinates;
 // the world routes reads/writes to the owning chunk and re-meshes only the
@@ -46,6 +46,7 @@ export class World {
     }
     // Populate base terrain, decorate (trees) at world level so canopies can
     // cross chunk borders, then mesh everything.
+    this.caveCount = 0;
     for (const chunk of this.chunks.values()) this.generateChunk(chunk);
     this.decorateTrees();
     for (const chunk of this.chunks.values()) this.remeshChunk(chunk);
@@ -140,17 +141,27 @@ export class World {
   }
 
   // Procedural terrain for one chunk: stone interior, 3 dirt layers, grass cap.
+  // Then carve caves into the subsurface with 3D noise.
   generateChunk(chunk) {
     const ox = chunk.cx * CHUNK_SIZE;
     const oz = chunk.cz * CHUNK_SIZE;
     for (let x = 0; x < CHUNK_SIZE; x++) {
       for (let z = 0; z < CHUNK_SIZE; z++) {
-        const h = this.heightAt(ox + x, oz + z);
+        const wx = ox + x, wz = oz + z;
+        const h = this.heightAt(wx, wz);
         for (let y = 0; y <= h; y++) {
           let t = BLOCK.STONE;
           if (y === h) t = BLOCK.GRASS;
           else if (y >= h - 3) t = BLOCK.DIRT;
           chunk.setLocal(x, y, z, t);
+        }
+        // Carve caves below the surface, keeping a 1-block floor and the
+        // top 2 blocks (so the surface isn't riddled with holes).
+        for (let y = 1; y <= h - 2; y++) {
+          if (isCave(wx, y, wz, { seed: this.seed })) {
+            chunk.setLocal(x, y, z, BLOCK.AIR);
+            this.caveCount++;
+          }
         }
       }
     }

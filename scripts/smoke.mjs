@@ -75,9 +75,13 @@ try {
   await sleep(500);
 
   const state = await page.evaluate(() => window.__VOXELCRAFT__.state);
+  // Poll the clock until it advances (robust against a slow first frame).
   const t0 = state.timeOfDay;
-  await sleep(600);
-  const t1 = await page.evaluate(() => window.__VOXELCRAFT__.state.timeOfDay);
+  let t1 = t0;
+  for (let i = 0; i < 20 && t1 <= t0; i++) {
+    await sleep(200);
+    t1 = await page.evaluate(() => window.__VOXELCRAFT__.state.timeOfDay);
+  }
   const canvas = await page.evaluate(() => {
     const c = document.getElementById("app");
     return { w: c.width, h: c.height };
@@ -112,6 +116,9 @@ try {
 
   if (t1 > t0) ok(`day/night cycle advancing (t ${t0.toFixed(4)} -> ${t1.toFixed(4)})`);
   else fail(`time not advancing (t ${t0} -> ${t1})`);
+
+  if (state.caveCount > 0) ok(`caves carved (${state.caveCount} air voxels)`);
+  else fail("no caves carved");
 
   console.log("\nState:", JSON.stringify(state));
 } catch (e) {
