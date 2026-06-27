@@ -8,6 +8,7 @@ export const BLOCK = {
   DIRT: 2,
   STONE: 3,
   WOOD: 4,
+  LEAVES: 5,
 };
 
 // Ordered list used by the hotbar (index 0 -> key "1").
@@ -18,6 +19,7 @@ export const BLOCK_NAMES = {
   [BLOCK.DIRT]: "dirt",
   [BLOCK.STONE]: "stone",
   [BLOCK.WOOD]: "wood",
+  [BLOCK.LEAVES]: "leaves",
 };
 
 // Tile indices into the atlas (assigned as tiles are registered below).
@@ -66,6 +68,7 @@ const T_WOOD_TOP = tile((ctx) => {
   ctx.strokeStyle = "#6b4a2b"; ctx.lineWidth = 1;
   for (const r of [3, 6]) { ctx.beginPath(); ctx.arc(8, 8, r, 0, Math.PI * 2); ctx.stroke(); }
 });
+const T_LEAVES = tile((ctx) => noise(ctx, "#3f7d2e", ["#356b27", "#4a8f37", "#2f5f22"], 6));
 
 // faces order: [px, nx, py, ny, pz, nz] -> +X,-X,+Y(top),-Y(bottom),+Z,-Z
 export const BLOCK_TILES = {
@@ -73,6 +76,7 @@ export const BLOCK_TILES = {
   [BLOCK.DIRT]:  [T_DIRT, T_DIRT, T_DIRT, T_DIRT, T_DIRT, T_DIRT],
   [BLOCK.STONE]: [T_STONE, T_STONE, T_STONE, T_STONE, T_STONE, T_STONE],
   [BLOCK.WOOD]:  [T_WOOD_SIDE, T_WOOD_SIDE, T_WOOD_TOP, T_WOOD_TOP, T_WOOD_SIDE, T_WOOD_SIDE],
+  [BLOCK.LEAVES]:[T_LEAVES, T_LEAVES, T_LEAVES, T_LEAVES, T_LEAVES, T_LEAVES],
 };
 
 export const TILE_COUNT = tiles.length;

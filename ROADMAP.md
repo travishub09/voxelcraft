@@ -15,7 +15,7 @@ Tech stack: **Three.js + Vite** (browser-based, zero-install to run).
 ## 🔜 Phase 1 — A living world
 - [x] Chunk system (split world into chunks)
 - [x] Procedural terrain (heightmap noise)
-- [ ] Trees
+- [x] Trees
 - [ ] Caves
 - [ ] Chunk loading/unloading around the player
 

@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { BLOCK, buildAtlasCanvas } from "./blocks.js";
 import { Chunk, CHUNK_SIZE, WORLD_HEIGHT, buildChunkGeometry } from "./chunk.js";
-import { terrainHeight } from "./noise.js";
+import { terrainHeight, cellRandom } from "./noise.js";
 
 // World = a grid of chunks. Voxels are addressed in global coordinates;
 // the world routes reads/writes to the owning chunk and re-meshes only the
@@ -44,9 +44,54 @@ export class World {
         this.chunks.set(this.key(cx, cz), new Chunk(cx, cz));
       }
     }
-    // Populate with terrain, then mesh.
+    // Populate base terrain, decorate (trees) at world level so canopies can
+    // cross chunk borders, then mesh everything.
     for (const chunk of this.chunks.values()) this.generateChunk(chunk);
+    this.decorateTrees();
     for (const chunk of this.chunks.values()) this.remeshChunk(chunk);
+  }
+
+  // Scatter trees on grass columns using a deterministic per-cell random.
+  decorateTrees() {
+    this.treeCount = 0;
+    const margin = 2; // keep canopy inside world bounds
+    for (let x = margin; x < this.sx - margin; x++) {
+      for (let z = margin; z < this.sz - margin; z++) {
+        if (cellRandom(x, z, this.seed ^ 0x5eed) > 0.015) continue; // ~1.5% of columns
+        const h = this.heightAt(x, z);
+        if (this.get(x, h, z) !== BLOCK.GRASS) continue;
+        this.placeTree(x, h, z);
+        this.treeCount++;
+      }
+    }
+  }
+
+  // Trunk + blobby leaf canopy. Uses global set() (routes across chunks).
+  placeTree(x, groundY, z) {
+    const trunkH = 4 + (cellRandom(x, z, this.seed) * 3 | 0); // 4..6
+    const topY = groundY + trunkH;
+    if (topY + 2 >= this.sy) return; // not enough headroom
+
+    // Trunk: wood from just above the surface up to topY.
+    for (let y = groundY + 1; y <= topY; y++) this.set(x, y, z, BLOCK.WOOD);
+
+    // Canopy: two wide layers around the top, plus a small cap.
+    const layers = [
+      { dy: -1, r: 2 }, { dy: 0, r: 2 }, { dy: 1, r: 1 }, { dy: 2, r: 1 },
+    ];
+    for (const { dy, r } of layers) {
+      const cy = topY + dy;
+      for (let dx = -r; dx <= r; dx++) {
+        for (let dz = -r; dz <= r; dz++) {
+          if (dx === 0 && dz === 0 && dy <= 0) continue; // leave room for trunk
+          // round off the corners of wide layers
+          if (r === 2 && Math.abs(dx) === 2 && Math.abs(dz) === 2) continue;
+          if (this.get(x + dx, cy, z + dz) === BLOCK.AIR) {
+            this.set(x + dx, cy, z + dz, BLOCK.LEAVES);
+          }
+        }
+      }
+    }
   }
 
   inBounds(x, y, z) {

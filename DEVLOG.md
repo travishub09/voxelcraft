@@ -2,6 +2,19 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Trees
+**Goal:** populate the surface with trees.
+
+Implemented:
+- `blocks.js`: new `LEAVES` block + green leaf texture tile.
+- `noise.js`: `cellRandom()` deterministic per-cell random for sparse placement.
+- `world.js`: `decorateTrees()` runs after base terrain at world level (so
+  canopies cross chunk borders) — ~1.5% of grass columns get a tree;
+  `placeTree()` builds a 4–6 high wood trunk + a rounded 4-layer leaf canopy.
+- Smoke test asserts `treeCount > 0`.
+
+Results: 119 trees, ~37.3k triangles. Smoke + unit tests green.
+
 ## 2026-06-27 — Procedural terrain + headless smoke test
 **Goal:** real rolling terrain, and a way to verify the *running* game (not
 just the build) automatically.

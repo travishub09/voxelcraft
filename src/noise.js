@@ -9,6 +9,11 @@ function hash2(x, y, seed) {
   return (h >>> 0) / 4294967296;
 }
 
+// Deterministic per-cell random in [0,1) — handy for sparse decoration (trees).
+export function cellRandom(x, y, seed = 0) {
+  return hash2(x | 0, y | 0, seed);
+}
+
 function smooth(t) {
   return t * t * (3 - 2 * t); // smoothstep
 }

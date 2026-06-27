@@ -100,6 +100,9 @@ try {
   if (state.playerY > 0 && state.playerY < state.worldSize[1] + 5) ok(`player positioned (y=${state.playerY.toFixed(1)})`);
   else fail(`player out of expected range (y=${state.playerY})`);
 
+  if (state.treeCount > 0) ok(`trees generated (${state.treeCount})`);
+  else fail("no trees generated");
+
   console.log("\nState:", JSON.stringify(state));
 } catch (e) {
   fail("harness error: " + e.message);

@@ -137,6 +137,7 @@ window.__VOXELCRAFT__ = {
   get state() {
     return {
       chunkCount: world.chunks.size,
+      treeCount: world.treeCount,
       worldSize: [world.sx, world.sy, world.sz],
       sampleHeights: [
         world.heightAt(8, 8),
