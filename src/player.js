@@ -1,5 +1,4 @@
 import * as THREE from "three";
-import { BLOCK } from "./blocks.js";
 
 // First-person controller: pointer-lock mouse look + WASD/jump with
 // simple AABB voxel collision and gravity.
@@ -62,12 +61,8 @@ export class Player {
     return dir;
   }
 
-  // True if the voxel containing world point (x,y,z) is solid.
-  _solidAt(x, y, z) {
-    return this.world.get(Math.floor(x), Math.floor(y), Math.floor(z)) !== BLOCK.AIR;
-  }
-
   // Does the player AABB at the given center collide with any solid voxel?
+  // Water is not solid, so the player can wade/sink into it.
   _collides(px, py, pz) {
     const hw = this.halfWidth;
     const minX = Math.floor(px - hw), maxX = Math.floor(px + hw);
@@ -76,7 +71,7 @@ export class Player {
     for (let x = minX; x <= maxX; x++)
       for (let y = minY; y <= maxY; y++)
         for (let z = minZ; z <= maxZ; z++)
-          if (this.world.get(x, y, z) !== BLOCK.AIR) return true;
+          if (this.world.isSolid(x, y, z)) return true;
     return false;
   }
 

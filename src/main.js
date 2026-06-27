@@ -65,7 +65,7 @@ function raycastVoxel(maxDist = 6) {
   let t = 0;
 
   while (t <= maxDist) {
-    if (world.get(x, y, z) !== BLOCK.AIR) {
+    if (world.isSolid(x, y, z)) {
       return { block: [x, y, z], place: [x + nx, y + ny, z + nz] };
     }
     if (tMaxX < tMaxY && tMaxX < tMaxZ) {
@@ -131,6 +131,7 @@ window.__VOXELCRAFT__ = {
       chunkCount: world.chunks.size,
       treeCount: world.treeCount,
       caveCount: world.caveCount,
+      waterCount: world.waterCount,
       worldSize: [world.sx, world.sy, world.sz],
       sampleHeights: [
         world.heightAt(8, 8),

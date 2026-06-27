@@ -2,6 +2,26 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Water (transparency-aware mesher)
+**Goal:** oceans/lakes with see-through water. Also lays the groundwork (split
+opaque/transparent meshing) for lava and portals on the road to the Nether.
+
+Implemented:
+- `blocks.js`: `WATER` block + blue tile + `isOpaque()` (air & water are
+  non-opaque).
+- `chunk.js`: `buildChunkGeometries()` now returns **two** geometries — opaque
+  and water. Opaque faces draw against any non-opaque neighbor; water faces draw
+  only against air (its surface).
+- `world.js`: separate transparent water material (opacity 0.72, depthWrite
+  off); per-chunk water mesh created/updated/removed alongside the opaque mesh;
+  `generateChunk()` floods air ≤ sea level (10) with water; `isSolid()` (water
+  isn't solid). Lowered terrain baseline so valleys flood.
+- `player.js` / `main.js`: collision + raycast use `isSolid()`, so you wade
+  through water and can't target it.
+- Smoke asserts water generated.
+
+Results: 8/8 unit, 11/11 smoke. 485 water voxels in the default world.
+
 ## 2026-06-27 — Caves
 **Goal:** carve underground caves into the terrain.
 

@@ -120,6 +120,9 @@ try {
   if (state.caveCount > 0) ok(`caves carved (${state.caveCount} air voxels)`);
   else fail("no caves carved");
 
+  if (state.waterCount > 0) ok(`water filled (${state.waterCount} voxels)`);
+  else fail("no water generated");
+
   console.log("\nState:", JSON.stringify(state));
 } catch (e) {
   fail("harness error: " + e.message);

@@ -9,7 +9,13 @@ export const BLOCK = {
   STONE: 3,
   WOOD: 4,
   LEAVES: 5,
+  WATER: 6,
 };
+
+// Opaque blocks fully hide the faces behind them. Air and water do not.
+export function isOpaque(type) {
+  return type !== BLOCK.AIR && type !== BLOCK.WATER;
+}
 
 // Ordered list used by the hotbar (index 0 -> key "1").
 export const PLACEABLE = [BLOCK.GRASS, BLOCK.DIRT, BLOCK.STONE, BLOCK.WOOD, BLOCK.LEAVES];
@@ -20,6 +26,7 @@ export const BLOCK_NAMES = {
   [BLOCK.STONE]: "stone",
   [BLOCK.WOOD]: "wood",
   [BLOCK.LEAVES]: "leaves",
+  [BLOCK.WATER]: "water",
 };
 
 // Tile indices into the atlas (assigned as tiles are registered below).
@@ -69,6 +76,7 @@ const T_WOOD_TOP = tile((ctx) => {
   for (const r of [3, 6]) { ctx.beginPath(); ctx.arc(8, 8, r, 0, Math.PI * 2); ctx.stroke(); }
 });
 const T_LEAVES = tile((ctx) => noise(ctx, "#3f7d2e", ["#356b27", "#4a8f37", "#2f5f22"], 6));
+const T_WATER = tile((ctx) => noise(ctx, "#2f6fd0", ["#2a64bd", "#3a7ce0", "#2d69c8"], 7));
 
 // faces order: [px, nx, py, ny, pz, nz] -> +X,-X,+Y(top),-Y(bottom),+Z,-Z
 export const BLOCK_TILES = {
@@ -77,6 +85,7 @@ export const BLOCK_TILES = {
   [BLOCK.STONE]: [T_STONE, T_STONE, T_STONE, T_STONE, T_STONE, T_STONE],
   [BLOCK.WOOD]:  [T_WOOD_SIDE, T_WOOD_SIDE, T_WOOD_TOP, T_WOOD_TOP, T_WOOD_SIDE, T_WOOD_SIDE],
   [BLOCK.LEAVES]:[T_LEAVES, T_LEAVES, T_LEAVES, T_LEAVES, T_LEAVES, T_LEAVES],
+  [BLOCK.WATER]: [T_WATER, T_WATER, T_WATER, T_WATER, T_WATER, T_WATER],
 };
 
 export const TILE_COUNT = tiles.length;

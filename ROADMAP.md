@@ -28,7 +28,7 @@ Tech stack: **Three.js + Vite** (browser-based, zero-install to run).
 
 ## 🌅 Phase 3 — Atmosphere & systems
 - [x] Day/night cycle
-- [ ] Water
+- [x] Water
 - [ ] Sound effects
 - [ ] Save/load world (localStorage)
 - [ ] Main menu

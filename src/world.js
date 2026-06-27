@@ -1,6 +1,6 @@
 import * as THREE from "three";
 import { BLOCK, buildAtlasCanvas } from "./blocks.js";
-import { Chunk, CHUNK_SIZE, WORLD_HEIGHT, buildChunkGeometry } from "./chunk.js";
+import { Chunk, CHUNK_SIZE, WORLD_HEIGHT, buildChunkGeometries } from "./chunk.js";
 import { terrainHeight, cellRandom, isCave } from "./noise.js";
 
 // World = a grid of chunks. Voxels are addressed in global coordinates;
@@ -15,19 +15,24 @@ export class World {
     this.sy = WORLD_HEIGHT;
     this.sz = chunksZ * CHUNK_SIZE;
 
+    this.seaLevel = 10;
     this.chunks = new Map(); // "cx,cz" -> Chunk
     this.group = new THREE.Group();
-    this.material = this._buildMaterial();
+    const tex = this._buildAtlasTexture();
+    this.material = new THREE.MeshLambertMaterial({ map: tex });
+    this.waterMaterial = new THREE.MeshLambertMaterial({
+      map: tex, transparent: true, opacity: 0.72, depthWrite: false,
+    });
 
     this._createChunks();
   }
 
-  _buildMaterial() {
+  _buildAtlasTexture() {
     const tex = new THREE.CanvasTexture(buildAtlasCanvas());
     tex.magFilter = THREE.NearestFilter;
     tex.minFilter = THREE.NearestFilter;
     tex.colorSpace = THREE.SRGBColorSpace;
-    return new THREE.MeshLambertMaterial({ map: tex });
+    return tex;
   }
 
   key(cx, cz) {
@@ -47,6 +52,7 @@ export class World {
     // Populate base terrain, decorate (trees) at world level so canopies can
     // cross chunk borders, then mesh everything.
     this.caveCount = 0;
+    this.waterCount = 0;
     for (const chunk of this.chunks.values()) this.generateChunk(chunk);
     this.decorateTrees();
     for (const chunk of this.chunks.values()) this.remeshChunk(chunk);
@@ -99,6 +105,12 @@ export class World {
     return x >= 0 && y >= 0 && z >= 0 && x < this.sx && y < this.sy && z < this.sz;
   }
 
+  // Solid = blocks the player. Air and water don't.
+  isSolid(x, y, z) {
+    const t = this.get(x, y, z);
+    return t !== BLOCK.AIR && t !== BLOCK.WATER;
+  }
+
   get(x, y, z) {
     if (!this.inBounds(x, y, z)) return BLOCK.AIR;
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
@@ -135,9 +147,10 @@ export class World {
     }
   }
 
-  // Surface height at world (x, z).
+  // Surface height at world (x, z). Baseline dips below sea level in valleys
+  // so oceans/lakes form.
   heightAt(x, z) {
-    return terrainHeight(x, z, { seed: this.seed, minH: 4, maxH: WORLD_HEIGHT - 4 });
+    return terrainHeight(x, z, { seed: this.seed, minH: 3, maxH: WORLD_HEIGHT - 8 });
   }
 
   // Procedural terrain for one chunk: stone interior, 3 dirt layers, grass cap.
@@ -163,19 +176,45 @@ export class World {
             this.caveCount++;
           }
         }
+
+        // Flood air at/below sea level with water (oceans & lakes).
+        for (let y = h + 1; y <= this.seaLevel; y++) {
+          if (chunk.getLocal(x, y, z) === BLOCK.AIR) {
+            chunk.setLocal(x, y, z, BLOCK.WATER);
+            this.waterCount++;
+          }
+        }
       }
     }
   }
 
   remeshChunk(chunk) {
-    const geom = buildChunkGeometry(this, chunk);
+    const { opaque, water } = buildChunkGeometries(this, chunk);
+    const px = chunk.cx * CHUNK_SIZE, pz = chunk.cz * CHUNK_SIZE;
+
     if (chunk.mesh) {
       chunk.mesh.geometry.dispose();
-      chunk.mesh.geometry = geom;
+      chunk.mesh.geometry = opaque;
     } else {
-      chunk.mesh = new THREE.Mesh(geom, this.material);
-      chunk.mesh.position.set(chunk.cx * CHUNK_SIZE, 0, chunk.cz * CHUNK_SIZE);
+      chunk.mesh = new THREE.Mesh(opaque, this.material);
+      chunk.mesh.position.set(px, 0, pz);
       this.group.add(chunk.mesh);
+    }
+
+    // Water mesh (transparent) — create/update/remove as needed.
+    if (water) {
+      if (chunk.waterMesh) {
+        chunk.waterMesh.geometry.dispose();
+        chunk.waterMesh.geometry = water;
+      } else {
+        chunk.waterMesh = new THREE.Mesh(water, this.waterMaterial);
+        chunk.waterMesh.position.set(px, 0, pz);
+        this.group.add(chunk.waterMesh);
+      }
+    } else if (chunk.waterMesh) {
+      chunk.waterMesh.geometry.dispose();
+      this.group.remove(chunk.waterMesh);
+      chunk.waterMesh = null;
     }
     chunk.dirty = false;
   }

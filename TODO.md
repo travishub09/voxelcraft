@@ -5,7 +5,7 @@
 
 ## Next
 - [x] Day/night cycle
-- [ ] Water (sea level + transparent water blocks)
+- [x] Water (sea level + transparent blocks)
 
 ## Backlog
 - [ ] Chunk loading/unloading around player
