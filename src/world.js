@@ -59,6 +59,7 @@ export class World {
     this.caveCount = 0;
     this.waterCount = 0;
     this.lavaCount = 0;
+    this.obsidianCount = 0;
     for (const chunk of this.chunks.values()) this.generateChunk(chunk);
     this.decorateTrees();
     for (const chunk of this.chunks.values()) this.remeshChunk(chunk);
@@ -188,6 +189,16 @@ export class World {
           if (chunk.getLocal(x, y, z) === BLOCK.AIR) {
             chunk.setLocal(x, y, z, BLOCK.LAVA);
             this.lavaCount++;
+          }
+        }
+
+        // Natural obsidian deposits in the stone just above the lava layer
+        // (where molten rock has cooled). Gives players a source for portals.
+        for (let y = this.lavaLevel + 1; y <= this.lavaLevel + 3; y++) {
+          if (chunk.getLocal(x, y, z) !== BLOCK.STONE) continue;
+          if (cellRandom(wx + y * 131, wz, this.seed ^ 0x0b51d) < 0.07) {
+            chunk.setLocal(x, y, z, BLOCK.OBSIDIAN);
+            this.obsidianCount++;
           }
         }
 

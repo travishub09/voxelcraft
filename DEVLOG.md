@@ -2,6 +2,20 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Obsidian
+**Goal:** the block a Nether portal is built from (ingredient #3).
+
+Implemented:
+- `blocks.js`: `OBSIDIAN` block + dark tile; added to `PLACEABLE` (hotbar now 6
+  slots) so players can build portal frames.
+- `world.js`: natural obsidian deposits in stone just above the lava layer
+  (deterministic ~7% in a 3-block band); `obsidianCount`.
+- Smoke asserts 6 hotbar slots + obsidian generated.
+
+Results: 8/8 unit, 13/13 smoke. 1819 obsidian deposits.
+
+Next: detect an obsidian portal frame and light it → Nether portal blocks.
+
 ## 2026-06-27 — Lava
 **Goal:** molten lava pooling deep underground (Nether ingredient #2).
 

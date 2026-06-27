@@ -11,6 +11,7 @@ export const BLOCK = {
   LEAVES: 5,
   WATER: 6,
   LAVA: 7,
+  OBSIDIAN: 8,
 };
 
 // Opaque blocks fully hide the faces behind them. Air and water do not.
@@ -24,7 +25,7 @@ export function isFluid(type) {
 }
 
 // Ordered list used by the hotbar (index 0 -> key "1").
-export const PLACEABLE = [BLOCK.GRASS, BLOCK.DIRT, BLOCK.STONE, BLOCK.WOOD, BLOCK.LEAVES];
+export const PLACEABLE = [BLOCK.GRASS, BLOCK.DIRT, BLOCK.STONE, BLOCK.WOOD, BLOCK.LEAVES, BLOCK.OBSIDIAN];
 
 export const BLOCK_NAMES = {
   [BLOCK.GRASS]: "grass",
@@ -34,6 +35,7 @@ export const BLOCK_NAMES = {
   [BLOCK.LEAVES]: "leaves",
   [BLOCK.WATER]: "water",
   [BLOCK.LAVA]: "lava",
+  [BLOCK.OBSIDIAN]: "obsidian",
 };
 
 // Tile indices into the atlas (assigned as tiles are registered below).
@@ -85,6 +87,7 @@ const T_WOOD_TOP = tile((ctx) => {
 const T_LEAVES = tile((ctx) => noise(ctx, "#3f7d2e", ["#356b27", "#4a8f37", "#2f5f22"], 6));
 const T_WATER = tile((ctx) => noise(ctx, "#2f6fd0", ["#2a64bd", "#3a7ce0", "#2d69c8"], 7));
 const T_LAVA = tile((ctx) => noise(ctx, "#e25822", ["#c33a10", "#ff8c1a", "#ffb733"], 8));
+const T_OBSIDIAN = tile((ctx) => noise(ctx, "#15101f", ["#0d0a16", "#241a33", "#1a1226"], 9));
 
 // faces order: [px, nx, py, ny, pz, nz] -> +X,-X,+Y(top),-Y(bottom),+Z,-Z
 export const BLOCK_TILES = {
@@ -95,6 +98,7 @@ export const BLOCK_TILES = {
   [BLOCK.LEAVES]:[T_LEAVES, T_LEAVES, T_LEAVES, T_LEAVES, T_LEAVES, T_LEAVES],
   [BLOCK.WATER]: [T_WATER, T_WATER, T_WATER, T_WATER, T_WATER, T_WATER],
   [BLOCK.LAVA]:  [T_LAVA, T_LAVA, T_LAVA, T_LAVA, T_LAVA, T_LAVA],
+  [BLOCK.OBSIDIAN]: [T_OBSIDIAN, T_OBSIDIAN, T_OBSIDIAN, T_OBSIDIAN, T_OBSIDIAN, T_OBSIDIAN],
 };
 
 export const TILE_COUNT = tiles.length;

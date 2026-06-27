@@ -111,8 +111,11 @@ try {
   if (state.treeCount > 0) ok(`trees generated (${state.treeCount})`);
   else fail("no trees generated");
 
-  if (hotbarSlots >= 5) ok(`hotbar rendered (${hotbarSlots} slots)`);
+  if (hotbarSlots >= 6) ok(`hotbar rendered (${hotbarSlots} slots)`);
   else fail(`hotbar missing slots (${hotbarSlots})`);
+
+  if (state.obsidianCount > 0) ok(`obsidian deposits generated (${state.obsidianCount})`);
+  else fail("no obsidian generated");
 
   if (t1 > t0) ok(`day/night cycle advancing (t ${t0.toFixed(4)} -> ${t1.toFixed(4)})`);
   else fail(`time not advancing (t ${t0} -> ${t1})`);

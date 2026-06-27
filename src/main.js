@@ -133,6 +133,7 @@ window.__VOXELCRAFT__ = {
       caveCount: world.caveCount,
       waterCount: world.waterCount,
       lavaCount: world.lavaCount,
+      obsidianCount: world.obsidianCount,
       worldSize: [world.sx, world.sy, world.sz],
       sampleHeights: [
         world.heightAt(8, 8),
