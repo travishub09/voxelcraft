@@ -12,7 +12,7 @@ export const BLOCK = {
 };
 
 // Ordered list used by the hotbar (index 0 -> key "1").
-export const PLACEABLE = [BLOCK.GRASS, BLOCK.DIRT, BLOCK.STONE, BLOCK.WOOD];
+export const PLACEABLE = [BLOCK.GRASS, BLOCK.DIRT, BLOCK.STONE, BLOCK.WOOD, BLOCK.LEAVES];
 
 export const BLOCK_NAMES = {
   [BLOCK.GRASS]: "grass",
@@ -98,6 +98,21 @@ export function buildAtlasCanvas() {
     ctx.restore();
   }
   return canvas;
+}
+
+// Produce a small pixel-art icon (data URL) for a block, using its side tile.
+// Used by the hotbar UI.
+export function blockIconDataURL(blockType, size = 48) {
+  const atlas = buildAtlasCanvas();
+  const TS = 16;
+  const tileIndex = BLOCK_TILES[blockType][0]; // side face
+  const out = document.createElement("canvas");
+  out.width = size;
+  out.height = size;
+  const ctx = out.getContext("2d");
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(atlas, tileIndex * TS, 0, TS, TS, 0, 0, size, size);
+  return out.toDataURL();
 }
 
 // UV rect for a given tile index within the atlas.

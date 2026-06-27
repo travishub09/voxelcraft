@@ -79,6 +79,7 @@ try {
     const c = document.getElementById("app");
     return { w: c.width, h: c.height };
   });
+  const hotbarSlots = await page.evaluate(() => document.querySelectorAll("#hotbar .hotbar-slot").length);
 
   // --- Assertions ---
   if (errors.length === 0) ok("no runtime/console errors");
@@ -102,6 +103,9 @@ try {
 
   if (state.treeCount > 0) ok(`trees generated (${state.treeCount})`);
   else fail("no trees generated");
+
+  if (hotbarSlots >= 5) ok(`hotbar rendered (${hotbarSlots} slots)`);
+  else fail(`hotbar missing slots (${hotbarSlots})`);
 
   console.log("\nState:", JSON.stringify(state));
 } catch (e) {

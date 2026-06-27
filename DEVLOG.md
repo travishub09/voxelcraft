@@ -2,6 +2,20 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Visual hotbar
+**Goal:** replace the text "Selected: x" label with a real hotbar UI.
+
+Implemented:
+- `blocks.js`: `LEAVES` added to `PLACEABLE` (now buildable); `blockIconDataURL()`
+  renders a pixel-art icon by cropping the block's side tile from the atlas.
+- `hotbar.js`: builds a row of slots (icon + number + name), highlights the
+  selected one; selection via number keys (1–5), mouse wheel, or click.
+- `index.html`: hotbar markup + Minecraft-ish CSS (raised selected slot, glow).
+- `main.js`: uses `hotbar.selectedBlock` for placement.
+- Smoke test asserts 5 hotbar slots render.
+
+Results: smoke + unit tests green (~37.3k tris, 5 slots).
+
 ## 2026-06-27 — Trees
 **Goal:** populate the surface with trees.
 

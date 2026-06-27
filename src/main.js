@@ -1,11 +1,11 @@
 import * as THREE from "three";
 import { World } from "./world.js";
 import { Player } from "./player.js";
-import { BLOCK, BLOCK_NAMES, PLACEABLE } from "./blocks.js";
+import { Hotbar } from "./hotbar.js";
+import { BLOCK } from "./blocks.js";
 
 const canvas = document.getElementById("app");
 const overlay = document.getElementById("overlay");
-const selectedLabel = document.getElementById("selected-block");
 
 // --- Renderer ---
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -36,19 +36,7 @@ const spawnX = Math.floor(world.sx / 2), spawnZ = Math.floor(world.sz / 2);
 player.position.set(spawnX + 0.5, world.heightAt(spawnX, spawnZ) + 2, spawnZ + 0.5);
 
 // --- Block selection (hotbar) ---
-let selectedIndex = 0;
-function updateSelectedLabel() {
-  selectedLabel.textContent = BLOCK_NAMES[PLACEABLE[selectedIndex]];
-}
-updateSelectedLabel();
-
-window.addEventListener("keydown", (e) => {
-  const n = parseInt(e.key, 10);
-  if (n >= 1 && n <= PLACEABLE.length) {
-    selectedIndex = n - 1;
-    updateSelectedLabel();
-  }
-});
+const hotbar = new Hotbar(document.getElementById("hotbar"));
 
 // --- Voxel ray traversal (Amanatides & Woo) ---
 // Returns { block: [x,y,z], place: [x,y,z] } or null.
@@ -102,7 +90,7 @@ document.addEventListener("mousedown", (e) => {
     // Place (don't place inside the player)
     const [px, py, pz] = hit.place;
     if (!playerOccupies(px, py, pz)) {
-      world.setBlock(px, py, pz, PLACEABLE[selectedIndex]);
+      world.setBlock(px, py, pz, hotbar.selectedBlock);
     }
   }
 });

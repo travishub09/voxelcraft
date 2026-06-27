@@ -1,27 +1,30 @@
 # TODO
 
 ## Now
-- [ ] Trees on the surface (place trunks + leaf canopy at generation time)
+- [ ] Caves (carve with 3D noise during generation)
 
 ## Next
-- [ ] Visual hotbar UI
-- [ ] Caves (3D noise carve-out)
+- [ ] Day/night cycle (animate sun + sky color)
+- [ ] Water (sea level + transparent water blocks)
 
 ## Backlog
 - [ ] Chunk loading/unloading around player
-- [ ] Caves
 - [ ] Inventory + crafting
-- [ ] Day/night cycle
-- [ ] Water
+- [ ] Block-break particles / feedback
 - [ ] Save/load (localStorage)
 - [ ] Sound effects
 - [ ] Main menu
 - [ ] Ambient occlusion + greedy meshing
+- [ ] Mobs
 
 ## Done
 - [x] Project scaffold (Vite + Three.js)
 - [x] Voxel world + face-culled mesh
 - [x] First-person controls + physics
-- [x] Flat terrain (grass/dirt/stone)
+- [x] Procedural terrain (fBm heightmap)
+- [x] Chunk system + per-chunk re-meshing
 - [x] Break/place blocks
-- [x] Block types: grass, dirt, stone, wood
+- [x] Block types: grass, dirt, stone, wood, leaves
+- [x] Trees
+- [x] Visual hotbar UI
+- [x] Node unit tests + headless smoke test

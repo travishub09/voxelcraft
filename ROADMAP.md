@@ -20,7 +20,7 @@ Tech stack: **Three.js + Vite** (browser-based, zero-install to run).
 - [ ] Chunk loading/unloading around the player
 
 ## 🔮 Phase 2 — Gameplay
-- [ ] Hotbar UI (visual block selection)
+- [x] Hotbar UI (visual block selection)
 - [ ] Inventory
 - [ ] Simple crafting
 - [ ] Block-break particles / feedback
