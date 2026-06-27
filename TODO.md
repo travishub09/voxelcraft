@@ -1,11 +1,11 @@
 # TODO
 
 ## Now
-- [ ] Procedural terrain (heightmap noise) — wire noise.js into world generation
+- [ ] Trees on the surface (place trunks + leaf canopy at generation time)
 
 ## Next
-- [ ] Trees on the surface
 - [ ] Visual hotbar UI
+- [ ] Caves (3D noise carve-out)
 
 ## Backlog
 - [ ] Chunk loading/unloading around player

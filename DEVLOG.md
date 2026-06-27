@@ -2,6 +2,30 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Procedural terrain + headless smoke test
+**Goal:** real rolling terrain, and a way to verify the *running* game (not
+just the build) automatically.
+
+Implemented:
+- `world.js`: `generateChunk()` now uses `terrainHeight()` (fBm) per column —
+  stone interior, 3 dirt layers, grass cap. Seeded (default 1337).
+- `main.js`: player spawns just above the real surface at world center; exposes
+  `window.__VOXELCRAFT__` debug hook (chunk count, draw calls, triangles,
+  sample heights, player Y).
+- `scripts/smoke.mjs` + `npm run smoke`: builds, serves `vite preview`, boots
+  the game in **headless Chromium (puppeteer)**, and asserts: no runtime/console
+  errors, canvas renders, chunks built, triangles > 0, terrain varies, player
+  positioned. Needed `--enable-unsafe-swiftshader --use-angle=swiftshader` for
+  software WebGL in headless.
+
+Results: 36 chunks, ~26.9k triangles, 18 draw calls, terrain heights vary.
+Smoke + unit tests both green.
+
+Decisions:
+- Smoke test is the verification backbone going forward — every rendering change
+  can now be checked headlessly, catching WebGL/Three runtime errors the build
+  can't.
+
 ## 2026-06-27 — Chunk system + test harness
 **Goal:** replace the single-mesh world so edits and (upcoming) procedural
 terrain don't rebuild one giant mesh.

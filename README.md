@@ -6,11 +6,12 @@ A Minecraft-inspired voxel game built from scratch with **Three.js** + **Vite**.
 
 ## Features (current)
 
-- 3D voxel world rendered with a face-culled chunk mesh
+- 3D voxel world split into chunks, rendered with face-culled meshes
+- **Procedural terrain** from fractal (fBm) value noise
 - First-person camera with pointer-lock mouse look
 - WASD movement, jumping, gravity, and AABB voxel collision
-- Flat terrain made of grass, dirt, and stone
-- Break blocks (left click) and place blocks (right click)
+- Break blocks (left click) and place blocks (right click) — only the edited
+  chunk re-meshes
 - Block selection: grass, dirt, stone, wood
 - Procedurally generated textures (no external assets)
 
@@ -32,6 +33,13 @@ Then open the URL Vite prints (default http://localhost:5173).
 ```bash
 npm run build      # outputs to dist/
 npm run preview    # serve the production build
+```
+
+### Tests
+
+```bash
+npm test     # pure-logic unit tests (noise/terrain), runs under Node
+npm run smoke # boots the built game in headless Chromium and checks it renders
 ```
 
 ## Controls

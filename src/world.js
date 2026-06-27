@@ -1,14 +1,16 @@
 import * as THREE from "three";
 import { BLOCK, buildAtlasCanvas } from "./blocks.js";
 import { Chunk, CHUNK_SIZE, WORLD_HEIGHT, buildChunkGeometry } from "./chunk.js";
+import { terrainHeight } from "./noise.js";
 
 // World = a grid of chunks. Voxels are addressed in global coordinates;
 // the world routes reads/writes to the owning chunk and re-meshes only the
 // chunks affected by an edit.
 export class World {
-  constructor({ chunksX = 6, chunksZ = 6 } = {}) {
+  constructor({ chunksX = 6, chunksZ = 6, seed = 1337 } = {}) {
     this.chunksX = chunksX;
     this.chunksZ = chunksZ;
+    this.seed = seed;
     this.sx = chunksX * CHUNK_SIZE;
     this.sy = WORLD_HEIGHT;
     this.sz = chunksZ * CHUNK_SIZE;
@@ -87,15 +89,22 @@ export class World {
     }
   }
 
-  // Flat terrain for one chunk: stone base, dirt, grass top.
+  // Surface height at world (x, z).
+  heightAt(x, z) {
+    return terrainHeight(x, z, { seed: this.seed, minH: 4, maxH: WORLD_HEIGHT - 4 });
+  }
+
+  // Procedural terrain for one chunk: stone interior, 3 dirt layers, grass cap.
   generateChunk(chunk) {
-    const ground = 6;
+    const ox = chunk.cx * CHUNK_SIZE;
+    const oz = chunk.cz * CHUNK_SIZE;
     for (let x = 0; x < CHUNK_SIZE; x++) {
       for (let z = 0; z < CHUNK_SIZE; z++) {
-        for (let y = 0; y <= ground; y++) {
+        const h = this.heightAt(ox + x, oz + z);
+        for (let y = 0; y <= h; y++) {
           let t = BLOCK.STONE;
-          if (y === ground) t = BLOCK.GRASS;
-          else if (y >= ground - 2) t = BLOCK.DIRT;
+          if (y === h) t = BLOCK.GRASS;
+          else if (y >= h - 3) t = BLOCK.DIRT;
           chunk.setLocal(x, y, z, t);
         }
       }

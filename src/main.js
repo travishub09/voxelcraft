@@ -31,6 +31,9 @@ scene.add(world.group);
 
 // --- Player ---
 const player = new Player(camera, world, canvas);
+// Spawn just above the terrain surface at world center.
+const spawnX = Math.floor(world.sx / 2), spawnZ = Math.floor(world.sz / 2);
+player.position.set(spawnX + 0.5, world.heightAt(spawnX, spawnZ) + 2, spawnZ + 0.5);
 
 // --- Block selection (hotbar) ---
 let selectedIndex = 0;
@@ -128,6 +131,25 @@ window.addEventListener("resize", () => {
   renderer.setSize(window.innerWidth, window.innerHeight);
 });
 
+// --- Debug hook (used by the headless smoke test) ---
+window.__VOXELCRAFT__ = {
+  ready: false,
+  get state() {
+    return {
+      chunkCount: world.chunks.size,
+      worldSize: [world.sx, world.sy, world.sz],
+      sampleHeights: [
+        world.heightAt(8, 8),
+        world.heightAt(40, 40),
+        world.heightAt(80, 12),
+      ],
+      drawCalls: renderer.info.render.calls,
+      triangles: renderer.info.render.triangles,
+      playerY: player.position.y,
+    };
+  },
+};
+
 // --- Game loop ---
 const clock = new THREE.Clock();
 function animate() {
@@ -135,5 +157,6 @@ function animate() {
   const dt = Math.min(clock.getDelta(), 0.05); // clamp to avoid tunneling on lag
   player.update(dt);
   renderer.render(scene, camera);
+  window.__VOXELCRAFT__.ready = true;
 }
 animate();
