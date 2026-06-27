@@ -1,10 +1,9 @@
 # TODO
 
 ## Now
-- [ ] Refactor world into a chunk system (prereq for procedural terrain)
+- [ ] Procedural terrain (heightmap noise) — wire noise.js into world generation
 
 ## Next
-- [ ] Procedural terrain (heightmap noise)
 - [ ] Trees on the surface
 - [ ] Visual hotbar UI
 

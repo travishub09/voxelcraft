@@ -27,7 +27,7 @@ scene.add(new THREE.AmbientLight(0xffffff, 0.55));
 
 // --- World ---
 const world = new World();
-scene.add(world.buildMesh());
+scene.add(world.group);
 
 // --- Player ---
 const player = new Player(camera, world, canvas);
@@ -94,14 +94,12 @@ document.addEventListener("mousedown", (e) => {
 
   if (e.button === 0) {
     // Break
-    world.set(hit.block[0], hit.block[1], hit.block[2], BLOCK.AIR);
-    world.buildMesh();
+    world.setBlock(hit.block[0], hit.block[1], hit.block[2], BLOCK.AIR);
   } else if (e.button === 2) {
     // Place (don't place inside the player)
     const [px, py, pz] = hit.place;
     if (!playerOccupies(px, py, pz)) {
-      world.set(px, py, pz, PLACEABLE[selectedIndex]);
-      world.buildMesh();
+      world.setBlock(px, py, pz, PLACEABLE[selectedIndex]);
     }
   }
 });

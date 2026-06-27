@@ -2,6 +2,28 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Chunk system + test harness
+**Goal:** replace the single-mesh world so edits and (upcoming) procedural
+terrain don't rebuild one giant mesh.
+
+Implemented:
+- `chunk.js`: `Chunk` (16×16×32 voxel array) + `buildChunkGeometry()` mesher
+  that queries `world.get()` for neighbors so cross-chunk borders cull correctly.
+- `world.js`: rewritten as a chunk manager (Map of chunks + a `THREE.Group`).
+  `setBlock()` re-meshes only the edited chunk (and a border neighbor if the
+  edit is on a chunk edge). Default world is 6×6 chunks (96×96).
+- `noise.js`: pure deterministic value-noise + fBm + `terrainHeight()` (ready
+  for procedural terrain next; isolated so it's Node-testable).
+- `test/logic.test.mjs` + `npm test`: verifies noise range/determinism/
+  continuity and terrain bounds/variation. **Real automated verification** that
+  doesn't need a browser. 5/5 passing.
+
+Decisions:
+- Kept flat terrain this iteration to isolate the refactor; procedural terrain
+  is the next commit (uses the already-tested `noise.js`).
+
+Verification: `npm test` 5/5 pass, `npm run build` succeeds.
+
 ## 2026-06-27 — v0.1.0: Playable base
 **Goal:** smallest playable voxel prototype.
 
