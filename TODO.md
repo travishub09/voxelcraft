@@ -1,37 +1,34 @@
 # TODO
 
 ## Now
-- (Nether milestone reached — pick the next thread below)
+- (Core survival features in — pick the next thread below)
 
 ## Next
-- [ ] Save/load world (localStorage) so a built world + portals persist
-- [ ] Block-break feedback (particles / sound)
-- [ ] Lava/portal damage + a simple health bar
+- [ ] Save/load world + inventory (localStorage)
+- [ ] Sound effects (break/place/hurt/ambient)
+- [ ] Hunger bar + food (pigs drop food)
 
 ## Backlog
+- [ ] Block-break particles / feedback
+- [ ] Mob drops + more mob types; Nether mobs
 - [ ] Chunk loading/unloading around player (infinite worlds)
-- [ ] Inventory + crafting (make flint & steel instead of the F key)
-- [ ] Sound effects
-- [ ] Main menu
+- [ ] Drag-and-drop inventory management
+- [ ] Tools (pickaxe/axe) + mining speed + correct drops
 - [ ] Ambient occlusion + greedy meshing
-- [ ] Mobs
-- [ ] Return-portal linking by coordinates
-- [ ] Soul sand, glowstone-light propagation, fortresses
+- [ ] Pause menu / return to main menu
 
 ## Done
 - [x] Project scaffold (Vite + Three.js)
-- [x] Voxel world + face-culled mesh
+- [x] Voxel world + chunked face-culled mesh
 - [x] First-person controls + physics
-- [x] Procedural terrain (fBm heightmap)
-- [x] Chunk system + per-chunk re-meshing
+- [x] Procedural terrain (fBm) + caves (3D noise)
 - [x] Break/place blocks
-- [x] Block types: grass, dirt, stone, wood, leaves, obsidian, water, lava,
-      portal, netherrack, glowstone
-- [x] Trees
+- [x] Trees, water, lava, day/night cycle
+- [x] Obsidian + Nether portal + Nether dimension + travel
 - [x] Visual hotbar UI
-- [x] Caves (3D-noise carving)
-- [x] Day/night cycle
-- [x] Water (transparent) + lava (emissive)
-- [x] Obsidian + Nether portal (frame detection + ignition)
-- [x] Nether dimension + portal travel
-- [x] Node unit tests + headless smoke test (17 checks)
+- [x] Inventory (stacked) + block drops
+- [x] Crafting + inventory/crafting screen (E)
+- [x] Main menu / world selector (seed + size)
+- [x] Mobs (passive pigs, hostile zombies)
+- [x] Health + damage (mobs/lava/fall) + respawn
+- [x] Node unit tests + headless smoke test (24 checks)

@@ -144,6 +144,16 @@ try {
   if (cr.ok && cr.after === cr.before + 4) ok(`crafting works (1 wood -> 4 planks: ${cr.before} -> ${cr.after})`);
   else fail(`crafting failed (${JSON.stringify(cr)})`);
 
+  const hearts = await page.evaluate(() => window.__VOXELCRAFT__.healthHearts());
+  if (hearts === 10) ok(`health bar renders (${hearts} hearts)`);
+  else fail(`health bar wrong (${hearts} hearts)`);
+
+  const mob = await page.evaluate(() => window.__VOXELCRAFT__.testMobDamage());
+  if (mob.spawned && mob.mobs > 0) ok(`mobs spawn (${mob.mobs} active)`);
+  else fail(`mob did not spawn (${JSON.stringify(mob)})`);
+  if (mob.after < mob.before) ok(`hostile mob damages player (${mob.before} -> ${mob.after} hp)`);
+  else fail(`mob dealt no damage (${mob.before} -> ${mob.after})`);
+
   if (state.obsidianCount > 0) ok(`obsidian deposits generated (${state.obsidianCount})`);
   else fail("no obsidian generated");
 

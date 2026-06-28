@@ -13,6 +13,11 @@ A Minecraft-inspired voxel game built from scratch with **Three.js** + **Vite**.
 - **Day/night cycle** — moving sun, shifting sky, on-screen clock
 - **Nether dimension** — build an obsidian portal, light it, and travel to a
   generated Nether (netherrack, lava seas, glowing glowstone, red fog)
+- **Main menu / world selector** — choose a seed and world size
+- **Survival systems** — stacked inventory + block drops, a crafting screen
+  (planks/sticks/crafting table/torch), a 20-HP heart bar, and damage from
+  hostile mobs, lava, and falls (with respawn)
+- **Mobs** — passive pigs that wander, hostile zombies that chase at night
 - First-person camera with pointer-lock mouse look
 - WASD movement, jumping, gravity, AABB voxel collision; wade through fluids
 - Break blocks (left click) and place blocks (right click) — only the edited
@@ -57,9 +62,13 @@ npm run smoke # boots the built game in headless Chromium and checks it renders
 | Space | Jump |
 | Left click | Break block |
 | Right click | Place block |
-| 1 – 6 / scroll | Select block (grass / dirt / stone / wood / leaves / obsidian) |
+| 1 – 9 / scroll | Select hotbar slot |
+| E | Open / close inventory + crafting |
 | F | Light a Nether portal (aim at an obsidian frame) |
-| Esc | Release mouse |
+| Esc | Release mouse / close inventory |
+
+Break blocks to collect them; placing consumes from the selected stack. Watch
+your hearts — zombies spawn at night, and lava and long falls hurt.
 
 ### Building a Nether portal
 

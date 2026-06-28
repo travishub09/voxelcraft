@@ -1,6 +1,7 @@
 import * as THREE from "three";
 import { World } from "./world.js";
 import { Player } from "./player.js";
+import { Mob } from "./mob.js";
 import { Hotbar } from "./hotbar.js";
 import { Inventory } from "./inventory.js";
 import { InventoryUI } from "./inventoryui.js";
@@ -11,6 +12,8 @@ import { BLOCK, isPlaceableBlock } from "./blocks.js";
 const canvas = document.getElementById("app");
 const overlay = document.getElementById("overlay");
 const clockEl = document.getElementById("clock");
+const healthEl = document.getElementById("health");
+const hurtEl = document.getElementById("hurt");
 
 // --- Renderer ---
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -23,6 +26,13 @@ scene.background = new THREE.Color(0x87ceeb);
 scene.fog = new THREE.Fog(0x87ceeb, 40, 80);
 
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+// Mobs live in their own group so they're easy to clear between worlds.
+const mobGroup = new THREE.Group();
+scene.add(mobGroup);
+let mobs = [];
+let mobSpawnTimer = 0;
+let lavaDamageTimer = 0;
 
 // --- Lighting + day/night cycle ---
 const sun = new THREE.DirectionalLight(0xffffff, 1.6);
@@ -75,8 +85,126 @@ function startGame({ seed = 1337, chunks = 6 } = {}) {
   inventory.add(BLOCK.STONE, 16);
   inventory.add(BLOCK.WOOD, 16);
 
+  // Reset health + mobs.
+  player.health = player.maxHealth;
+  player.regenTimer = 0;
+  clearMobs();
+
   applyAtmosphere("overworld");
   started = true;
+}
+
+// --- Mobs ---
+function clearMobs() {
+  for (const m of mobs) mobGroup.remove(m.mesh);
+  mobs = [];
+}
+
+// Find a standable Y at (x,z): the block above the highest solid column block.
+function surfaceY(x, z) {
+  for (let y = world.sy - 1; y >= 1; y--) {
+    if (world.isSolid(x, y, z) && !world.isSolid(x, y + 1, z) && !world.isSolid(x, y + 2, z)) return y + 1;
+  }
+  return null;
+}
+
+function spawnMob(kind, x, z) {
+  const y = surfaceY(x, z);
+  if (y === null) return null;
+  const mob = new Mob(world, kind, x + 0.5, y, z + 0.5);
+  mobs.push(mob);
+  mobGroup.add(mob.mesh);
+  return mob;
+}
+
+// Spawn around the player at a random distance (overworld only).
+function trySpawnNearPlayer() {
+  if (mobs.length >= 8) return;
+  const ang = Math.random() * Math.PI * 2;
+  const r = 9 + Math.random() * 6;
+  const x = Math.floor(player.position.x + Math.cos(ang) * r);
+  const z = Math.floor(player.position.z + Math.sin(ang) * r);
+  if (x < 1 || z < 1 || x >= world.sx - 1 || z >= world.sz - 1) return;
+  // Hostiles at night, passive by day.
+  const night = dayNight.t < 0.24 || dayNight.t > 0.76;
+  spawnMob(night ? "zombie" : "pig", x, z);
+}
+
+function updateMobs(dt) {
+  mobGroup.visible = dimension === "overworld";
+  if (dimension !== "overworld") return;
+
+  mobSpawnTimer -= dt;
+  if (mobSpawnTimer <= 0) { mobSpawnTimer = 3; trySpawnNearPlayer(); }
+
+  for (const mob of mobs) {
+    mob.update(dt, player.position);
+    // Hostile contact damage.
+    if (mob.hostile && mob.attackCooldown <= 0) {
+      const dx = mob.position.x - player.position.x;
+      const dz = mob.position.z - player.position.z;
+      const dy = mob.position.y - player.position.y;
+      if (Math.hypot(dx, dz) < 0.9 && Math.abs(dy) < 2) {
+        player.damage(mob.damage);
+        mob.attackCooldown = 1.0;
+      }
+    }
+  }
+  // Remove dead/fallen mobs.
+  mobs = mobs.filter((m) => {
+    if (m.dead || m.position.distanceTo(player.position) > 60) { mobGroup.remove(m.mesh); return false; }
+    return true;
+  });
+}
+
+// Environment damage (lava) + death/respawn.
+function updateSurvival(dt) {
+  // Standing in lava hurts over time.
+  const fx = Math.floor(player.position.x), fz = Math.floor(player.position.z);
+  const fy = Math.floor(player.position.y + 0.1);
+  const inLava = world.get(fx, fy, fz) === BLOCK.LAVA || world.get(fx, Math.floor(player.position.y + 1), fz) === BLOCK.LAVA;
+  if (inLava) {
+    lavaDamageTimer -= dt;
+    if (lavaDamageTimer <= 0) { player.damage(2); lavaDamageTimer = 0.5; }
+  } else {
+    lavaDamageTimer = 0;
+  }
+
+  if (player.dead) respawn();
+  updateHealthUI();
+}
+
+function respawn() {
+  flash("💀 You died — respawning");
+  if (dimension !== "overworld") returnToOverworld();
+  player.position.set(spawnX + 0.5, world.heightAt(spawnX, spawnZ) + 2, spawnZ + 0.5);
+  player.velocity.set(0, 0, 0);
+  player.health = player.maxHealth;
+  player.regenTimer = 0;
+  player.fallPeakY = player.position.y;
+  clearMobs();
+}
+
+function returnToOverworld() {
+  scene.remove(world.group);
+  world = overworld;
+  scene.add(world.group);
+  player.world = world;
+  dimension = "overworld";
+  applyAtmosphere("overworld");
+}
+
+function updateHealthUI() {
+  if (!healthEl) return;
+  const hp = player.health;
+  let html = "";
+  for (let i = 0; i < 10; i++) {
+    const full = hp >= (i + 1) * 2;
+    const half = !full && hp >= i * 2 + 1;
+    html += `<span class="heart ${full ? "full" : half ? "half" : "empty"}">♥</span>`;
+  }
+  healthEl.innerHTML = html;
+  if (hurtEl) hurtEl.style.opacity = Math.max(0, player.hurtFlash) * 1.5;
 }
 
 // --- Main menu wiring ---
@@ -361,6 +489,17 @@ window.__VOXELCRAFT__ = {
     invUI.hide();
     return n;
   },
+  // Spawn a hostile mob on top of the player and confirm it deals damage.
+  testMobDamage() {
+    const before = player.health;
+    const m = spawnMob("zombie", Math.floor(player.position.x), Math.floor(player.position.z));
+    if (m) { m.position.copy(player.position); m.attackCooldown = 0; }
+    for (let i = 0; i < 5; i++) updateMobs(0.1);
+    return { spawned: !!m, before, after: player.health, mobs: mobs.length };
+  },
+  healthHearts() {
+    return document.querySelectorAll("#health .heart").length;
+  },
   // Programmatically travel to the Nether (used by the smoke test).
   enterNether() {
     if (dimension !== "nether") travel();
@@ -374,6 +513,8 @@ window.__VOXELCRAFT__ = {
   get state() {
     return {
       dimension,
+      mobCount: mobs.length,
+      health: player ? player.health : 0,
       inventoryUsed: inventory.usedSlots(),
       inventoryTotal: inventory.totalItems(),
       chunkCount: world.chunks.size,
@@ -422,6 +563,9 @@ function animate() {
   } else {
     inPortalLastFrame = nowInPortal;
   }
+
+  updateMobs(dt);
+  updateSurvival(dt);
 
   if (dimension === "overworld") {
     dayNight.update(dt);

@@ -21,6 +21,13 @@ export class Player {
     this.yaw = 0;
     this.pitch = 0;
 
+    // Survival stats.
+    this.maxHealth = 20;
+    this.health = 20;
+    this.regenTimer = 0;
+    this.hurtFlash = 0;       // seconds of red flash remaining (for UI)
+    this.fallPeakY = this.position.y;
+
     this.keys = {};
     this.locked = false;
 
@@ -51,6 +58,21 @@ export class Player {
 
   requestLock() {
     this.dom.requestPointerLock();
+  }
+
+  damage(amount) {
+    if (amount <= 0 || this.health <= 0) return;
+    this.health = Math.max(0, this.health - amount);
+    this.regenTimer = 0;
+    this.hurtFlash = 0.3;
+  }
+
+  heal(amount) {
+    this.health = Math.min(this.maxHealth, this.health + amount);
+  }
+
+  get dead() {
+    return this.health <= 0;
   }
 
   // Direction the camera is looking (unit vector).
@@ -99,6 +121,7 @@ export class Player {
 
     // --- Move axis-by-axis with collision resolution ---
     const p = this.position;
+    const wasOnGround = this.onGround;
 
     p.x += this.velocity.x * dt;
     if (this._collides(p.x, p.y, p.z)) { p.x -= this.velocity.x * dt; this.velocity.x = 0; }
@@ -116,10 +139,29 @@ export class Player {
       this.onGround = false;
     }
 
+    // --- Fall damage ---
+    if (this.onGround) {
+      if (!wasOnGround) {
+        const fall = this.fallPeakY - p.y;
+        if (fall > 4) this.damage(Math.floor(fall - 3));
+      }
+      this.fallPeakY = p.y;
+    } else {
+      this.fallPeakY = Math.max(this.fallPeakY, p.y);
+    }
+
+    // --- Health regen + hurt flash timers ---
+    if (this.hurtFlash > 0) this.hurtFlash -= dt;
+    if (this.health > 0 && this.health < this.maxHealth) {
+      this.regenTimer += dt;
+      if (this.regenTimer >= 3) { this.heal(1); this.regenTimer = 0; }
+    }
+
     // Respawn if we somehow fall out of the world.
     if (p.y < -20) {
       p.set(this.world.sx / 2, this.world.sy, this.world.sz / 2);
       this.velocity.set(0, 0, 0);
+      this.fallPeakY = p.y;
     }
 
     // --- Sync camera ---

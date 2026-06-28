@@ -21,18 +21,20 @@ Tech stack: **Three.js + Vite** (browser-based, zero-install to run).
 
 ## 🔮 Phase 2 — Gameplay
 - [x] Hotbar UI (visual block selection)
-- [ ] Inventory
-- [ ] Simple crafting
+- [x] Inventory (stacked, 36 slots) + block drops
+- [x] Simple crafting (planks/sticks/crafting table/torch)
+- [x] Mobs (passive pigs, hostile zombies)
+- [x] Health + damage (mobs / lava / fall) + respawn
 - [ ] Block-break particles / feedback
-- [ ] Mobs
+- [ ] Hunger
 
 ## 🌅 Phase 3 — Atmosphere & systems
 - [x] Day/night cycle
 - [x] Water
 - [x] Lava
+- [x] Main menu / world selector (seed + size)
 - [ ] Sound effects
 - [ ] Save/load world (localStorage)
-- [ ] Main menu
 
 ## 🔥 Phase 4 — The Nether (done)
 - [x] Obsidian (placeable + natural deposits)

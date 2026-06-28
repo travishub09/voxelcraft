@@ -2,6 +2,26 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Survival systems: inventory, crafting, menu, mobs, health
+Added the core survival/game features that were missing (per user request).
+
+- **Inventory + drops** (`inventory.js`): 36-slot stacked inventory; breaking
+  collects the drop, placing consumes the selected stack; hotbar shows counts.
+- **Crafting** (`crafting.js`, `inventoryui.js`): E opens an inventory/crafting
+  screen; click recipes (planks/sticks/crafting table/torch). New items: PLANKS,
+  CRAFTING_TABLE, TORCH (emissive), STICK (non-placeable item).
+- **Main menu / world selector**: title screen with seed input, random seed,
+  and world-size select; world is generated on "Generate World". `startGame()`
+  defers world/player creation; input handlers guard until started.
+- **Mobs** (`mob.js`): passive pigs (wander) + hostile zombies (chase, jump
+  walls, deal contact damage), simple AABB voxel physics, multi-box meshes with
+  eyes; spawn around the player (hostiles at night), capped at 8, overworld only.
+- **Health + damage**: 20 HP heart bar, damage from hostile mobs / lava / falls,
+  hurt-flash vignette, passive regen, death → respawn.
+
+Verified each step with unit + smoke tests. Smoke now 24 checks (menu, inventory,
+crafting, health bar, mob spawn + mob damage, plus all prior world/Nether checks).
+
 ## 2026-06-27 — 🔥 The Nether dimension (milestone)
 **Goal:** stepping through a lit portal transports the player to a generated
 Nether — the natural finish line for the water→lava→obsidian→portal arc.
