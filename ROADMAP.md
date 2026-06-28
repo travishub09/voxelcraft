@@ -33,7 +33,7 @@ Tech stack: **Three.js + Vite** (browser-based, zero-install to run).
 - [x] Water
 - [x] Lava
 - [x] Main menu / world selector (seed + size)
-- [ ] Sound effects
+- [x] Sound effects (procedural Web Audio)
 - [x] Save/load world (localStorage)
 
 ## 🔥 Phase 4 — The Nether (done)

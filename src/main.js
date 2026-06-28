@@ -6,6 +6,7 @@ import { Hotbar } from "./hotbar.js";
 import { Inventory } from "./inventory.js";
 import { InventoryUI } from "./inventoryui.js";
 import { DayNight } from "./daynight.js";
+import { Sound } from "./sound.js";
 import { RECIPES, craft } from "./crafting.js";
 import { hasSave, saveGame, loadGame } from "./save.js";
 import { BLOCK, isPlaceableBlock } from "./blocks.js";
@@ -54,8 +55,9 @@ let started = false;
 
 // --- Inventory + hotbar (persist across worlds; reset on new game) ---
 const inventory = new Inventory();
+const sound = new Sound();
 const hotbar = new Hotbar(document.getElementById("hotbar"), inventory);
-const invUI = new InventoryUI(document.getElementById("inventory"), inventory);
+const invUI = new InventoryUI(document.getElementById("inventory"), inventory, () => sound.craft());
 
 // Create (or recreate) a world and drop the player into it. With { load: true }
 // it restores the saved world (seed + edits + inventory + player + time).
@@ -203,8 +205,25 @@ function updateSurvival(dt) {
     lavaDamageTimer = 0;
   }
 
+  // Hurt sound when health drops.
+  if (player.health < lastHealth) sound.hurt();
+  lastHealth = player.health;
+
   if (player.dead) respawn();
   updateHealthUI();
+}
+let lastHealth = 20;
+
+// Footstep cadence while walking on the ground.
+let stepTimer = 0;
+function updateFootsteps(dt) {
+  const moving = Math.hypot(player.velocity.x, player.velocity.z) > 0.5;
+  if (moving && player.onGround) {
+    stepTimer -= dt;
+    if (stepTimer <= 0) { sound.step(); stepTimer = 0.34; }
+  } else {
+    stepTimer = 0;
+  }
 }
 
 function respawn() {
@@ -251,6 +270,7 @@ document.getElementById("play-btn").addEventListener("click", () => {
   const chunks = parseInt(document.getElementById("size-select").value, 10) || 6;
   startGame({ seed, chunks });
   menuEl.classList.add("hidden");
+  sound.resume();
   canvas.requestPointerLock();
 });
 
@@ -260,6 +280,7 @@ if (hasSave()) continueBtn.classList.remove("hidden");
 continueBtn.addEventListener("click", () => {
   startGame({ load: true });
   menuEl.classList.add("hidden");
+  sound.resume();
   canvas.requestPointerLock();
 });
 
@@ -276,6 +297,8 @@ window.addEventListener("keydown", (e) => {
     if (invUI.open && player.locked) document.exitPointerLock();
   } else if (e.code === "Escape" && invUI.open) {
     invUI.hide();
+  } else if (e.code === "KeyM") {
+    flash(sound.toggle() ? "🔊 Sound on" : "🔇 Sound off");
   }
 });
 
@@ -290,6 +313,7 @@ function breakBlock(x, y, z) {
   if (type === BLOCK.AIR || !world.isSolid(x, y, z)) return false;
   world.setBlock(x, y, z, BLOCK.AIR);
   inventory.add(dropOf(type), 1);
+  sound.break();
   return true;
 }
 
@@ -302,6 +326,7 @@ function placeBlock(x, y, z) {
   if (world.get(x, y, z) !== BLOCK.AIR) return false;
   world.setBlock(x, y, z, item.type);
   inventory.removeAt(idx, 1);
+  sound.place();
   return true;
 }
 
@@ -457,6 +482,7 @@ function travel() {
   player.position.set(a.x, a.y, a.z);
   player.velocity.set(0, 0, 0);
   applyAtmosphere(target);
+  sound.portal();
   portalCooldown = 1.0;
   inPortalLastFrame = true; // don't immediately re-trigger on arrival
   return target;
@@ -547,6 +573,16 @@ window.__VOXELCRAFT__ = {
   healthHearts() {
     return document.querySelectorAll("#health .heart").length;
   },
+  // Trigger each sound effect; report that the audio engine works.
+  testSound() {
+    try {
+      sound.resume();
+      sound.break(); sound.place(); sound.hurt(); sound.craft(); sound.step(); sound.portal();
+      return { ok: true, ctx: !!sound.ctx, state: sound.ctx ? sound.ctx.state : "none" };
+    } catch (e) {
+      return { ok: false, error: String(e) };
+    }
+  },
   // Place a block, save, reload, and confirm it persisted.
   testSaveLoad() {
     const x = spawnX + 3, z = spawnZ + 3, y = world.heightAt(x, z) + 1;
@@ -622,6 +658,7 @@ function animate() {
 
   updateMobs(dt);
   updateSurvival(dt);
+  updateFootsteps(dt);
 
   if (dimension === "overworld") {
     dayNight.update(dt);

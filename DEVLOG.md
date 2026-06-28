@@ -2,6 +2,18 @@
 
 Reverse-chronological log of development iterations.
 
+## 2026-06-27 — Save/load + sound effects
+- **Save/load** (`save.js`): worlds persist to localStorage. We save the seed +
+  the player's runtime edits (tracked in `world.edits`) rather than every voxel,
+  plus inventory, player position/health, and time of day. The menu shows a
+  "Continue" button when a save exists; auto-saves every 20s and on tab
+  hide/close. `world.applyEdits()` reconstructs the edits on load.
+- **Sound** (`sound.js`): procedural Web Audio SFX (no asset files) for break,
+  place, hurt, footsteps, craft, and portal; M toggles mute. Audio context
+  resumes on the first user gesture (the menu Play click).
+
+Smoke now 27 checks (adds save/load persistence + health restore + sound engine).
+
 ## 2026-06-27 — Survival systems: inventory, crafting, menu, mobs, health
 Added the core survival/game features that were missing (per user request).
 

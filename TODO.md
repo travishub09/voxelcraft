@@ -5,7 +5,7 @@
 
 ## Next
 - [x] Save/load world + inventory (localStorage)
-- [ ] Sound effects (break/place/hurt/ambient)
+- [x] Sound effects (procedural: break/place/hurt/step/craft/portal)
 - [ ] Hunger bar + food (pigs drop food)
 
 ## Backlog

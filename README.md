@@ -18,6 +18,8 @@ A Minecraft-inspired voxel game built from scratch with **Three.js** + **Vite**.
   (planks/sticks/crafting table/torch), a 20-HP heart bar, and damage from
   hostile mobs, lava, and falls (with respawn)
 - **Mobs** — passive pigs that wander, hostile zombies that chase at night
+- **Save/load** — worlds persist to your browser; "Continue" resumes them
+- **Procedural sound effects** (Web Audio — break/place/hurt/step/craft/portal)
 - First-person camera with pointer-lock mouse look
 - WASD movement, jumping, gravity, AABB voxel collision; wade through fluids
 - Break blocks (left click) and place blocks (right click) — only the edited
@@ -65,6 +67,7 @@ npm run smoke # boots the built game in headless Chromium and checks it renders
 | 1 – 9 / scroll | Select hotbar slot |
 | E | Open / close inventory + crafting |
 | F | Light a Nether portal (aim at an obsidian frame) |
+| M | Toggle sound |
 | Esc | Release mouse / close inventory |
 
 Break blocks to collect them; placing consumes from the selected stack. Watch

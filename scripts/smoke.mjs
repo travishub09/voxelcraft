@@ -160,6 +160,10 @@ try {
   if (sl.health === sl.hpBefore) ok(`save/load restores health (${sl.health})`);
   else fail(`health not restored (${sl.hpBefore} -> ${sl.health})`);
 
+  const snd = await page.evaluate(() => window.__VOXELCRAFT__.testSound());
+  if (snd.ok) ok(`sound engine works (ctx ${snd.ctx}, ${snd.state})`);
+  else fail(`sound failed (${JSON.stringify(snd)})`);
+
   if (state.obsidianCount > 0) ok(`obsidian deposits generated (${state.obsidianCount})`);
   else fail("no obsidian generated");
 

@@ -4,9 +4,10 @@ import { RECIPES, canCraft, craft } from "./crafting.js";
 // The inventory + crafting screen (toggled with E). Shows all inventory slots
 // and a list of recipes you can click to craft.
 export class InventoryUI {
-  constructor(containerEl, inventory) {
+  constructor(containerEl, inventory, onCraft = null) {
     this.container = containerEl;
     this.inventory = inventory;
+    this.onCraft = onCraft;
     this.open = false;
     this._iconCache = new Map();
     this._build();
@@ -82,7 +83,10 @@ export class InventoryUI {
       btn.textContent = "Craft";
       btn.disabled = !able;
       btn.addEventListener("click", () => {
-        if (craft(this.inventory, recipe)) this.refresh();
+        if (craft(this.inventory, recipe)) {
+          if (this.onCraft) this.onCraft();
+          this.refresh();
+        }
       });
       row.appendChild(btn);
 
