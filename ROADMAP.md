@@ -34,7 +34,7 @@ Tech stack: **Three.js + Vite** (browser-based, zero-install to run).
 - [x] Lava
 - [x] Main menu / world selector (seed + size)
 - [ ] Sound effects
-- [ ] Save/load world (localStorage)
+- [x] Save/load world (localStorage)
 
 ## 🔥 Phase 4 — The Nether (done)
 - [x] Obsidian (placeable + natural deposits)

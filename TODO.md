@@ -4,7 +4,7 @@
 - (Core survival features in — pick the next thread below)
 
 ## Next
-- [ ] Save/load world + inventory (localStorage)
+- [x] Save/load world + inventory (localStorage)
 - [ ] Sound effects (break/place/hurt/ambient)
 - [ ] Hunger bar + food (pigs drop food)
 

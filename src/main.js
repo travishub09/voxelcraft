@@ -7,6 +7,7 @@ import { Inventory } from "./inventory.js";
 import { InventoryUI } from "./inventoryui.js";
 import { DayNight } from "./daynight.js";
 import { RECIPES, craft } from "./crafting.js";
+import { hasSave, saveGame, loadGame } from "./save.js";
 import { BLOCK, isPlaceableBlock } from "./blocks.js";
 
 const canvas = document.getElementById("app");
@@ -56,8 +57,12 @@ const inventory = new Inventory();
 const hotbar = new Hotbar(document.getElementById("hotbar"), inventory);
 const invUI = new InventoryUI(document.getElementById("inventory"), inventory);
 
-// Create (or recreate) a world and drop the player into it.
-function startGame({ seed = 1337, chunks = 6 } = {}) {
+// Create (or recreate) a world and drop the player into it. With { load: true }
+// it restores the saved world (seed + edits + inventory + player + time).
+function startGame({ seed = 1337, chunks = 6, load = false } = {}) {
+  const save = load ? loadGame() : null;
+  if (save) { seed = save.seed; chunks = save.chunks; }
+
   // Tear down any previous world.
   if (overworld) scene.remove(overworld.group);
   if (nether) scene.remove(nether.group);
@@ -75,23 +80,51 @@ function startGame({ seed = 1337, chunks = 6 } = {}) {
   spawnZ = Math.floor(world.sz / 2);
   if (!player) player = new Player(camera, world, canvas);
   else player.world = world;
-  player.position.set(spawnX + 0.5, world.heightAt(spawnX, spawnZ) + 2, spawnZ + 0.5);
+
+  if (save) {
+    overworld.applyEdits(save.edits || []);
+    player.position.set(save.player.x, save.player.y, save.player.z);
+    player.health = save.player.health ?? player.maxHealth;
+    inventory.setSlots(save.inventory);
+    if (typeof save.time === "number") dayNight.t = save.time;
+  } else {
+    player.position.set(spawnX + 0.5, world.heightAt(spawnX, spawnZ) + 2, spawnZ + 0.5);
+    player.health = player.maxHealth;
+    inventory.clear();
+    inventory.add(BLOCK.GRASS, 16);
+    inventory.add(BLOCK.DIRT, 16);
+    inventory.add(BLOCK.STONE, 16);
+    inventory.add(BLOCK.WOOD, 16);
+  }
+
   player.velocity.set(0, 0, 0);
-
-  // Fresh starter kit.
-  inventory.clear();
-  inventory.add(BLOCK.GRASS, 16);
-  inventory.add(BLOCK.DIRT, 16);
-  inventory.add(BLOCK.STONE, 16);
-  inventory.add(BLOCK.WOOD, 16);
-
-  // Reset health + mobs.
-  player.health = player.maxHealth;
   player.regenTimer = 0;
+  player.fallPeakY = player.position.y;
   clearMobs();
 
   applyAtmosphere("overworld");
   started = true;
+}
+
+// Snapshot the overworld for saving (seed + runtime edits, not every voxel).
+function buildSaveData() {
+  const inOverworld = dimension === "overworld";
+  const px = inOverworld ? player.position.x : spawnX + 0.5;
+  const py = inOverworld ? player.position.y : overworld.heightAt(spawnX, spawnZ) + 2;
+  const pz = inOverworld ? player.position.z : spawnZ + 0.5;
+  return {
+    seed: overworld.seed,
+    chunks: overworld.chunksX,
+    time: dayNight.t,
+    player: { x: px, y: py, z: pz, health: player.health },
+    inventory: inventory.slots,
+    edits: [...overworld.edits],
+  };
+}
+
+function doSave() {
+  if (!started) return false;
+  return saveGame(buildSaveData());
 }
 
 // --- Mobs ---
@@ -220,6 +253,20 @@ document.getElementById("play-btn").addEventListener("click", () => {
   menuEl.classList.add("hidden");
   canvas.requestPointerLock();
 });
+
+// "Continue" loads the saved world (shown only if a save exists).
+const continueBtn = document.getElementById("continue-btn");
+if (hasSave()) continueBtn.classList.remove("hidden");
+continueBtn.addEventListener("click", () => {
+  startGame({ load: true });
+  menuEl.classList.add("hidden");
+  canvas.requestPointerLock();
+});
+
+// Auto-save periodically and when the tab is hidden / closed.
+setInterval(doSave, 20000);
+window.addEventListener("beforeunload", doSave);
+document.addEventListener("visibilitychange", () => { if (document.hidden) doSave(); });
 
 // Toggle the inventory/crafting screen with E (releases the mouse while open).
 window.addEventListener("keydown", (e) => {
@@ -499,6 +546,15 @@ window.__VOXELCRAFT__ = {
   },
   healthHearts() {
     return document.querySelectorAll("#health .heart").length;
+  },
+  // Place a block, save, reload, and confirm it persisted.
+  testSaveLoad() {
+    const x = spawnX + 3, z = spawnZ + 3, y = world.heightAt(x, z) + 1;
+    world.setBlock(x, y, z, BLOCK.OBSIDIAN);
+    const hp = player.health;
+    const saved = doSave();
+    startGame({ load: true });
+    return { saved, restored: world.get(x, y, z) === BLOCK.OBSIDIAN, health: player.health, hpBefore: hp };
   },
   // Programmatically travel to the Nether (used by the smoke test).
   enterNether() {

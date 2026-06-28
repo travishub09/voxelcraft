@@ -154,6 +154,12 @@ try {
   if (mob.after < mob.before) ok(`hostile mob damages player (${mob.before} -> ${mob.after} hp)`);
   else fail(`mob dealt no damage (${mob.before} -> ${mob.after})`);
 
+  const sl = await page.evaluate(() => window.__VOXELCRAFT__.testSaveLoad());
+  if (sl.saved && sl.restored) ok(`save/load persists edits + restores world`);
+  else fail(`save/load failed (${JSON.stringify(sl)})`);
+  if (sl.health === sl.hpBefore) ok(`save/load restores health (${sl.health})`);
+  else fail(`health not restored (${sl.hpBefore} -> ${sl.health})`);
+
   if (state.obsidianCount > 0) ok(`obsidian deposits generated (${state.obsidianCount})`);
   else fail("no obsidian generated");
 

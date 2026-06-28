@@ -19,6 +19,7 @@ export class World {
     this.seaLevel = 10;
     this.lavaLevel = 4;
     this.chunks = new Map(); // "cx,cz" -> Chunk
+    this.edits = new Map();  // runtime block edits (index -> type), for save/load
     this.group = new THREE.Group();
     const tex = this._buildAtlasTexture();
     this.material = new THREE.MeshLambertMaterial({ map: tex });
@@ -188,10 +189,15 @@ export class World {
     if (chunk) chunk.setLocal(x - cx * CHUNK_SIZE, y, z - cz * CHUNK_SIZE, type);
   }
 
+  editIndex(x, y, z) {
+    return x + this.sx * (y + this.sy * z);
+  }
+
   // Edit a block at runtime and re-mesh affected chunk(s).
   setBlock(x, y, z, type) {
     if (!this.inBounds(x, y, z)) return;
     this.set(x, y, z, type);
+    this.edits.set(this.editIndex(x, y, z), type);
     const cx = Math.floor(x / CHUNK_SIZE), cz = Math.floor(z / CHUNK_SIZE);
     const lx = x - cx * CHUNK_SIZE, lz = z - cz * CHUNK_SIZE;
 
@@ -326,6 +332,19 @@ export class World {
         }
       }
     }
+  }
+
+  // Apply a list of [index, type] edits (from a save) and re-mesh everything.
+  applyEdits(edits) {
+    for (const [idx, type] of edits) {
+      const x = idx % this.sx;
+      const rem = Math.floor(idx / this.sx);
+      const y = rem % this.sy;
+      const z = Math.floor(rem / this.sy);
+      this.set(x, y, z, type);
+      this.edits.set(idx, type);
+    }
+    for (const chunk of this.chunks.values()) this.remeshChunk(chunk);
   }
 
   remeshChunk(chunk) {

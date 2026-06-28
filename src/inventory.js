@@ -81,4 +81,13 @@ export class Inventory {
     this.slots.fill(null);
     this._changed();
   }
+
+  // Replace all slots from a saved array of { type, count } | null.
+  setSlots(arr) {
+    for (let i = 0; i < INV_SIZE; i++) {
+      const s = arr && arr[i];
+      this.slots[i] = s ? { type: s.type, count: s.count } : null;
+    }
+    this._changed();
+  }
 }

@@ -67,6 +67,12 @@
       background: #5a8f3d; color: #fff; border: none; border-radius: 6px;
     }
     #play-btn:hover { background: #6aa548; }
+    #continue-btn {
+      width: 100%; margin-top: 8px; padding: 10px; font-family: monospace;
+      font-size: 14px; cursor: pointer; background: #3a6a8f; color: #fff;
+      border: none; border-radius: 6px;
+    }
+    #continue-btn:hover { background: #4a7aa5; }
     .menu-controls { margin-top: 18px; font-size: 11px; line-height: 1.7; opacity: 0.7; }
 
     /* Inventory + crafting screen */
@@ -196,6 +202,7 @@
         </select>
       </label>
       <button id="play-btn" type="button">Generate World ▶</button>
+      <button id="continue-btn" type="button" class="hidden">Continue saved world ⟳</button>
       <div class="menu-controls">
         WASD move · Space jump · Mouse look<br />
         L/R click break/place · 1–9 hotbar · E inventory · F light portal
