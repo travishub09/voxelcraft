@@ -33,6 +33,42 @@
     #overlay p { font-size: 16px; line-height: 1.8; opacity: 0.9; }
     .hidden { display: none !important; }
 
+    /* Main menu */
+    #menu {
+      position: fixed; inset: 0; z-index: 30;
+      background: linear-gradient(160deg, #6ab0de 0%, #87ceeb 40%, #b5e0a0 100%);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .menu-panel {
+      background: rgba(20,20,26,0.82); border: 3px solid #11111a; border-radius: 12px;
+      padding: 30px 34px; width: 360px; text-align: center; color: #fff;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.5);
+    }
+    .menu-panel h1 { font-size: 42px; letter-spacing: 5px; text-shadow: 3px 3px 0 #2a6b2a; }
+    .menu-sub { opacity: 0.75; font-size: 12px; margin: 4px 0 22px; }
+    .menu-field {
+      display: block; text-align: left; font-size: 12px; margin-bottom: 14px;
+      text-transform: uppercase; letter-spacing: 1px; opacity: 0.9;
+    }
+    .menu-field input, .menu-field select {
+      width: 100%; margin-top: 5px; padding: 8px 10px; font-family: monospace;
+      font-size: 14px; border-radius: 5px; border: 2px solid #3a3a44;
+      background: #2a2a30; color: #fff; box-sizing: border-box;
+    }
+    .seed-row { display: flex; gap: 6px; }
+    .seed-row input { flex: 1; }
+    #seed-random {
+      margin-top: 5px; width: 42px; border: 2px solid #3a3a44; border-radius: 5px;
+      background: #2a2a30; cursor: pointer; font-size: 16px;
+    }
+    #play-btn {
+      width: 100%; margin-top: 8px; padding: 12px; font-family: monospace;
+      font-size: 16px; font-weight: bold; letter-spacing: 1px; cursor: pointer;
+      background: #5a8f3d; color: #fff; border: none; border-radius: 6px;
+    }
+    #play-btn:hover { background: #6aa548; }
+    .menu-controls { margin-top: 18px; font-size: 11px; line-height: 1.7; opacity: 0.7; }
+
     /* Inventory + crafting screen */
     #inventory {
       position: fixed; inset: 0; z-index: 25; background: rgba(0,0,0,0.55);
@@ -121,6 +157,32 @@
   <div id="crosshair"></div>
   <div id="clock">🕐 --:--</div>
   <div id="hotbar"></div>
+  <div id="menu">
+    <div class="menu-panel">
+      <h1>VOXELCRAFT</h1>
+      <p class="menu-sub">a Minecraft-inspired voxel world</p>
+      <label class="menu-field">
+        World seed
+        <span class="seed-row">
+          <input id="seed-input" type="text" inputmode="numeric" value="1337" />
+          <button id="seed-random" type="button" title="Random seed">🎲</button>
+        </span>
+      </label>
+      <label class="menu-field">
+        World size
+        <select id="size-select">
+          <option value="4">Small (4×4 chunks)</option>
+          <option value="6" selected>Normal (6×6 chunks)</option>
+          <option value="8">Large (8×8 chunks)</option>
+        </select>
+      </label>
+      <button id="play-btn" type="button">Generate World ▶</button>
+      <div class="menu-controls">
+        WASD move · Space jump · Mouse look<br />
+        L/R click break/place · 1–9 hotbar · E inventory · F light portal
+      </div>
+    </div>
+  </div>
   <div id="inventory" class="hidden"></div>
   <div id="overlay">
     <h1>VOXELCRAFT</h1>

@@ -76,4 +76,9 @@ export class Inventory {
   usedSlots() {
     return this.slots.filter(Boolean).length;
   }
+
+  clear() {
+    this.slots.fill(null);
+    this._changed();
+  }
 }

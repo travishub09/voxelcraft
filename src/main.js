@@ -32,31 +32,70 @@ const ambient = new THREE.AmbientLight(0xffffff, 0.55);
 scene.add(ambient);
 const dayNight = new DayNight(scene, sun, ambient);
 
-// --- Worlds / dimensions ---
-const overworld = new World();
+// --- Game state (a world is created when "Generate World" is clicked) ---
+let overworld = null;
 let nether = null;            // built lazily on first portal travel
-let world = overworld;        // the active dimension
+let world = null;             // the active dimension
 let dimension = "overworld";
-scene.add(world.group);
+let player = null;
+let spawnX = 0, spawnZ = 0;
+let started = false;
 
-// --- Player ---
-const player = new Player(camera, world, canvas);
-// Spawn just above the terrain surface at world center.
-const spawnX = Math.floor(world.sx / 2), spawnZ = Math.floor(world.sz / 2);
-player.position.set(spawnX + 0.5, world.heightAt(spawnX, spawnZ) + 2, spawnZ + 0.5);
-
-// --- Inventory + hotbar ---
+// --- Inventory + hotbar (persist across worlds; reset on new game) ---
 const inventory = new Inventory();
-// A small starter kit so you can build right away; break blocks to collect more.
-inventory.add(BLOCK.GRASS, 16);
-inventory.add(BLOCK.DIRT, 16);
-inventory.add(BLOCK.STONE, 16);
-inventory.add(BLOCK.WOOD, 16);
 const hotbar = new Hotbar(document.getElementById("hotbar"), inventory);
 const invUI = new InventoryUI(document.getElementById("inventory"), inventory);
 
+// Create (or recreate) a world and drop the player into it.
+function startGame({ seed = 1337, chunks = 6 } = {}) {
+  // Tear down any previous world.
+  if (overworld) scene.remove(overworld.group);
+  if (nether) scene.remove(nether.group);
+  nether = null;
+  dimension = "overworld";
+  for (const k of Object.keys(portalReturn)) delete portalReturn[k];
+  portalCooldown = 0;
+  inPortalLastFrame = false;
+
+  overworld = new World({ seed, chunksX: chunks, chunksZ: chunks });
+  world = overworld;
+  scene.add(world.group);
+
+  spawnX = Math.floor(world.sx / 2);
+  spawnZ = Math.floor(world.sz / 2);
+  if (!player) player = new Player(camera, world, canvas);
+  else player.world = world;
+  player.position.set(spawnX + 0.5, world.heightAt(spawnX, spawnZ) + 2, spawnZ + 0.5);
+  player.velocity.set(0, 0, 0);
+
+  // Fresh starter kit.
+  inventory.clear();
+  inventory.add(BLOCK.GRASS, 16);
+  inventory.add(BLOCK.DIRT, 16);
+  inventory.add(BLOCK.STONE, 16);
+  inventory.add(BLOCK.WOOD, 16);
+
+  applyAtmosphere("overworld");
+  started = true;
+}
+
+// --- Main menu wiring ---
+const menuEl = document.getElementById("menu");
+const seedInput = document.getElementById("seed-input");
+document.getElementById("seed-random").addEventListener("click", () => {
+  seedInput.value = String(Math.floor(Math.random() * 1e9));
+});
+document.getElementById("play-btn").addEventListener("click", () => {
+  const seed = parseInt(seedInput.value, 10) || 1337;
+  const chunks = parseInt(document.getElementById("size-select").value, 10) || 6;
+  startGame({ seed, chunks });
+  menuEl.classList.add("hidden");
+  canvas.requestPointerLock();
+});
+
 // Toggle the inventory/crafting screen with E (releases the mouse while open).
 window.addEventListener("keydown", (e) => {
+  if (!started) return;
   if (e.code === "KeyE") {
     invUI.toggle();
     if (invUI.open && player.locked) document.exitPointerLock();
@@ -129,10 +168,10 @@ function raycastVoxel(maxDist = 6) {
 }
 
 // --- Mouse interaction ---
-overlay.addEventListener("click", () => player.requestLock());
+overlay.addEventListener("click", () => { if (player) player.requestLock(); });
 
 document.addEventListener("mousedown", (e) => {
-  if (!player.locked) return;
+  if (!started || !player.locked) return;
   const hit = raycastVoxel();
   if (!hit) return;
 
@@ -147,7 +186,7 @@ document.addEventListener("contextmenu", (e) => e.preventDefault());
 
 // Light a Nether portal: press F while looking at an obsidian frame's interior.
 window.addEventListener("keydown", (e) => {
-  if (e.code !== "KeyF" || !player.locked) return;
+  if (!started || e.code !== "KeyF" || !player.locked) return;
   const hit = raycastVoxel();
   if (!hit) return;
   const n = world.lightPortal(hit.place[0], hit.place[1], hit.place[2]) ||
@@ -261,7 +300,8 @@ function playerOccupies(x, y, z) {
 // Show/hide the start overlay with pointer lock (but not while the inventory
 // screen is open).
 document.addEventListener("pointerlockchange", () => {
-  overlay.classList.toggle("hidden", player.locked || invUI.open);
+  const locked = player && player.locked;
+  overlay.classList.toggle("hidden", !started || locked || invUI.open);
 });
 
 // --- Resize ---
@@ -294,6 +334,9 @@ function buildTestPortal() {
 window.__VOXELCRAFT__ = {
   ready: false,
   buildTestPortal,
+  // Start a default world without going through the menu (used by smoke test).
+  startGame: (opts) => startGame(opts),
+  started: () => started,
   // Break the topmost solid block of a column and report the new item total.
   testCollect() {
     const before = inventory.totalItems();
@@ -360,8 +403,9 @@ function animate() {
   requestAnimationFrame(animate);
   const dt = Math.min(clock.getDelta(), 0.05); // clamp to avoid tunneling on lag
 
-  // Freeze the world while the inventory screen is open.
-  if (invUI.open) {
+  // Before a world is started, or while the inventory screen is open, just
+  // render the current scene (menu/overlay sit on top in the DOM).
+  if (!started || invUI.open) {
     renderer.render(scene, camera);
     window.__VOXELCRAFT__.ready = true;
     return;

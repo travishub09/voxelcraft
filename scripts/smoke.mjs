@@ -72,7 +72,22 @@ try {
     if (ready) break;
   }
   if (!ready) fail("game did not become ready within timeout");
-  await sleep(500);
+  await sleep(300);
+
+  // The game starts at a main menu now — verify it, then start a world.
+  const menuVisible = await page.evaluate(() => {
+    const m = document.getElementById("menu");
+    return !!m && !m.classList.contains("hidden");
+  });
+  if (menuVisible) ok("main menu shown at launch");
+  else fail("main menu not shown at launch");
+
+  await page.evaluate(() => window.__VOXELCRAFT__.startGame());
+  // Wait for the first game frame to actually render the world.
+  for (let i = 0; i < 25; i++) {
+    await sleep(120);
+    if (await page.evaluate(() => window.__VOXELCRAFT__.state.triangles > 0)) break;
+  }
 
   const state = await page.evaluate(() => window.__VOXELCRAFT__.state);
   // Poll the clock until it advances (robust against a slow first frame).
